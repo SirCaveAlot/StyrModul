@@ -15,28 +15,30 @@
 void Timer1_init()
 {
 	CLKPR |= (1 << CLKPCE); // Prescaler enabled.
-	TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS11);  // Fast PWM, ICR1 = TOP, prescaler 8.
+	TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS11) | (1 << CS10);  // Fast PWM, ICR1 = TOP, prescaler 64.
 	TCCR1A |= (1 << WGM11) | (1 << COM1A1) | (1 << COM1B1); // set fast PWM-mode, ICR1 = TOP, non-inverting mode
 	
-	ICR1 = 36863; // Top-value PWM. (2559 128kHz)
+	ICR1 = 4607; // Top-value PWM. (2559 128kHz)
 }
 
 void Set_speed_right(float velocity_right)
 {
+	OCR1B = velocity_right*ICR1;/*
 	uint16_t speed_data = velocity_right*ICR1;
 	uint8_t LSB_speed_data = speed_data;
 	uint8_t MSB_speed_data = speed_data >> 8;	
 	OCR1BL = LSB_speed_data;
-	OCR1BH = MSB_speed_data;
+	OCR1BH = MSB_speed_data;*/
 }
 
 void Set_speed_left(float velocity_left)
 {
+	OCR1A = velocity_left*ICR1;/*
 	uint16_t speed_data = velocity_left*ICR1;
 	uint8_t LSB_speed_data = speed_data;
 	uint8_t MSB_speed_data = speed_data >> 8;
 	OCR1AL = LSB_speed_data;
-	OCR1AH = MSB_speed_data;
+	OCR1AH = MSB_speed_data;*/
 }
 
 void Drive_forward(float velocity_left, float velocity_right)
@@ -66,11 +68,11 @@ void Rotate_counter_clockwise(float velocity_left, float velocity_right)
 	Set_speed_left(velocity_left);
 	Set_speed_right(velocity_right);
 }
-
+/*
 int main(void)
 {
-	DDRD = 0b11000000;
-	DDRA = 0b00000011;	
+	DDRD |= (1 << 4) | (1 << 5);
+	DDRA |= (1 << 0) | (1 << 1);	
 	
 	Timer1_init();
 	
@@ -87,4 +89,4 @@ int main(void)
 		_delay_ms(1);
 		//TODO:: Please write your application code 
     }
-}
+}*/

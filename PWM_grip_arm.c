@@ -5,7 +5,7 @@
  *  Author: guswe541
  */ 
 
-#define F_CPU 128000UL
+#define F_CPU 14745600UL
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -13,13 +13,13 @@
 
 void Timer2_init()
 {
-	TCCR2A |= (1<<WGM20)|(1<<COM2B1)|(1<<WGM21); // |(1<<COM2A1); fast PWM-mode, MAX = TOP
-	TCCR2B |= (1<<CS21); // clock select 8 prescaler for 128000 kHz
+	TCCR2A |= (1 << WGM20) | (1 << COM2B1) | (1 << WGM21); // |(1<<COM2A1); fast PWM-mode, MAX = TOP
+	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20); // clock select 8 prescaler for 128000 kHz
 }
 
 void Open_grip_arm()
 {
-	OCR2B = 30; // 2 ms with 128000 kHz
+	OCR2B = 29; // 2 ms with 128000 kHz
 }
 
 void Center_grip_arm()
@@ -29,9 +29,9 @@ void Center_grip_arm()
 
 void Close_grip_arm()
 {
-	OCR2B = 15; //15 1 ms with 128000 kHz
+	OCR2B = 14; //15 1 ms with 128000 kHz
 }
-
+/*
 int main()
 {
 	DDRD |= (1<<PORTD6); // OSC2A and OSC2B as outputs.
@@ -47,4 +47,4 @@ int main()
 		Close_grip_arm();
 		_delay_ms(2000);	
 	}
-}
+}*/
