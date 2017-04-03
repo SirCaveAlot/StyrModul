@@ -15,6 +15,7 @@
 #include <util/delay.h>
 #include "PWM_SirCave.h"
 #include "PWM_grip_arm.h"
+#include "UART.h"
 
 #define clkspd 14745600
 #define BAUD 115200
@@ -55,7 +56,7 @@ ISR(USART0_RX_vect)
 	USART_Transmit('\n');
 }
 
-void USART_Init( unsigned int baud )
+void USART_Init(unsigned int baud)
 {
 	/* Set baud rate */
 	UBRR0H = 0;
@@ -74,7 +75,7 @@ void USART_Transmit(char data)
 	UDR0 = data;
 }
 
-char USART_Receive( void )
+char USART_Receive(void)
 {
 	/* Wait for data to be received */
 	while (!(UCSR0A & (1<<RXC0)));
@@ -86,60 +87,4 @@ void Interrupt_Init()
 {
 	UCSR0B |= (1<<RXCIE0);
 	sei();
-}
-
-int main(void)
-{
-	DDRD = 0xFE;
-	DDRA = 0xFF;
-	
-	Timer1_init();
-	Timer2_init();
-	USART_Init(UBBR);
-	Interrupt_Init();
-	//Drive_forward(0.5, 0.5);
-	while(1)
-	{
-		/*
-        Drive_forward(0.5, 0.5);
-        _delay_ms(3000);
-        Drive_backwards(0.9, 0.9);
-        _delay_ms(3000);
-        Rotate_clockwise(0.5, 0.5);
-        _delay_ms(3000);
-        Rotate_counter_clockwise(0.8, 0.8);
-        _delay_ms(3000);*/
-		while(data == 'f')
-		{
-			Drive_forward(0.5, 0.5);
-		}
-		while(data == 'b')
-		{
-			Drive_backwards(0.5, 0.5);
-		}
-		while(data == 'l')
-		{
-			Rotate_counter_clockwise(0.5, 0.5);
-		}
-		while(data == 'r')
-		{
-			Rotate_clockwise(0.5, 0.5);
-		}
-		while(data == 's')
-		{
-			Drive_forward(0, 0);
-		}
-		while(data == 'o')
-		{
-			Open_grip_arm();
-		}
-		while(data == 'c')
-		{
-			Close_grip_arm();
-		}
-		while(data == 'm')
-		{
-			Center_grip_arm();
-		}
-	}
 }

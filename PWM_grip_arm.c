@@ -1,5 +1,5 @@
 /*
- * TSEA56ROBOT.c
+ * PWM_grip_arm.c
  *
  * Created: 3/24/2017 11:18:58 AM
  *  Author: guswe541
@@ -31,20 +31,3 @@ void Close_grip_arm()
 {
 	OCR2B = 14; //15 1 ms with 128000 kHz
 }
-/*
-int main()
-{
-	DDRD |= (1<<PORTD6); // OSC2A and OSC2B as outputs.
-	CLKPR |= (1<<CLKPCE); // prescaler enabled
-	Timer2_init(); // Timer initialization.
-	
-	Center_grip_arm();
-	while(1)
-	{
-		// Infinite loop.		
-		Open_grip_arm();
-		_delay_ms(2000);
-		Close_grip_arm();
-		_delay_ms(2000);	
-	}
-}*/

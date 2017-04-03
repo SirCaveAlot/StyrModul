@@ -23,4 +23,12 @@ void Rotate_clockwise(float, float);
 
 void Rotate_counter_clockwise(float, float);
 
-#endif /* PWM_SIRCAVE_H_ */
+void Timer2_init();
+
+void Open_grip_arm();
+
+void Center_grip_arm();
+
+void Close_grip_arm();
+
+#endif

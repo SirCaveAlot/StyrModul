@@ -10,7 +10,9 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include "PWM_SirCave.h"
-//#include <avr/interrupt.h>
+
+
+//----------------------Wheels----------------------------
 
 void Timer1_init()
 {
@@ -21,72 +23,68 @@ void Timer1_init()
 	ICR1 = 4607; // Top-value PWM. (2559 128kHz)
 }
 
-void Set_speed_right(float velocity_right)
+void Set_speed_right(float velocity_right) // Sets the speed on the right side to 0 < velocity_right < 1. 
 {
-	OCR1B = velocity_right*ICR1;/*
-	uint16_t speed_data = velocity_right*ICR1;
-	uint8_t LSB_speed_data = speed_data;
-	uint8_t MSB_speed_data = speed_data >> 8;	
-	OCR1BL = LSB_speed_data;
-	OCR1BH = MSB_speed_data;*/
+	OCR1B = velocity_right*ICR1;
 }
 
-void Set_speed_left(float velocity_left)
+void Set_speed_left(float velocity_left) // Sets the speed on the left side to 0 < velocity_right < 1.
 {
-	OCR1A = velocity_left*ICR1;/*
-	uint16_t speed_data = velocity_left*ICR1;
-	uint8_t LSB_speed_data = speed_data;
-	uint8_t MSB_speed_data = speed_data >> 8;
-	OCR1AL = LSB_speed_data;
-	OCR1AH = MSB_speed_data;*/
+	OCR1A = velocity_left*ICR1;
 }
 
 void Drive_forward(float velocity_left, float velocity_right)
 {
 	PORTA = (1 << PORTA0) | (1 << PORTA1); // Forward direction on both sides.
-	Set_speed_left(velocity_left);
-	Set_speed_right(velocity_right); // Same velocity on both sides.
+	Set_speed_left(velocity_left); // velocity_left on left side
+	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
 void Drive_backwards(float velocity_left, float velocity_right)
 {
 	PORTA = (0 << PORTA0) | (0 << PORTA1); // Forward direction on both sides.
-	Set_speed_left(velocity_left);
-	Set_speed_right(velocity_right); // Same velocity on both sides.
+	Set_speed_left(velocity_left); // velocity_left on left side
+	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
 void Rotate_clockwise(float velocity_left, float velocity_right)
 {
 	PORTA = (1 << PORTA0) | (0 << PORTA1); // Forward direction on the left side and backwards on the right side.
-	Set_speed_left(velocity_left);
-	Set_speed_right(velocity_right);	
+	Set_speed_left(velocity_left); // velocity_left on left side
+	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
 void Rotate_counter_clockwise(float velocity_left, float velocity_right)
 {
 	PORTA = (0 << PORTA0) | (1 << PORTA1); // Forward direction on the right side and backwards on the left side.
-	Set_speed_left(velocity_left);
-	Set_speed_right(velocity_right);
+	Set_speed_left(velocity_left); // velocity_left on left side
+	Set_speed_right(velocity_right); // velocity_right on right side
 }
-/*
-int main(void)
+
+
+//--------------------Grip arm-----------------------------
+
+void Timer2_init()
 {
-	DDRD |= (1 << 4) | (1 << 5);
-	DDRA |= (1 << 0) | (1 << 1);	
-	
-	Timer1_init();
-	
-	
-    while(1)
-    {
-        Drive_forward(0.5, 0.5);
-		_delay_ms(1);
-		Drive_backwards(0.9, 0.9);
-		_delay_ms(1);
-		Rotate_clockwise(0.5, 0.5);
-		_delay_ms(1);
-		Rotate_counter_clockwise(0.8, 0.8);
-		_delay_ms(1);
-		//TODO:: Please write your application code 
-    }
-}*/
+	TCCR2A |= (1 << WGM20) | (1 << COM2B1) | (1 << WGM21) | (1 << COM2A1); // fast PWM-mode, MAX = TOP
+	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20); // clock select 8 prescaler for 128000 kHz
+}
+
+void Open_grip_arm()
+{
+	OCR2B = 29; // 2 ms with 128000 kHz
+}
+
+void Center_grip_arm()
+{
+	OCR2B = 22; // 1.5 ms with 128000 kHz
+}
+
+void Close_grip_arm()
+{
+	OCR2B = 14; // 1 ms with 128000 kHz
+}
+
+
+//----------------------LIDAR servo---------------------------
+
