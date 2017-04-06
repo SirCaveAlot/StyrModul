@@ -11,10 +11,8 @@
 
 void USART_Init(unsigned int);
 
-void USART_Transmit(char);
-
-char USART_Receive(void);
-
 void Interrupt_Init();
+
+void Data_transmission();
 
 #endif

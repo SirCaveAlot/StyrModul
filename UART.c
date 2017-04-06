@@ -17,74 +17,77 @@
 #include "PWM_grip_arm.h"
 #include "UART.h"
 
+
+//----------------Global variables-----------------------
+
 #define clkspd 14745600
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
-char data;
-char buffer;
-void USART_Transmit(char data);
+// Received data
+char mode = 'S';
+uint8_t receiving_counter = 0;
+uint16_t data_buffer = 0;
+
+// Data for transmission
+char mode_complete = 'D';
+uint8_t transmission_counter = 0;
+
+
+//-------------------Interrupts--------------------------
 
 ISR(USART0_RX_vect)
 {
-	data = UDR0;
-	/*
-	if(data == 'f')
+	uint8_t data = UDR0;
+	if(receiving_counter == 0)
 	{
-		Drive_forward(0.5, 0.5);
+		mode = data; // Store the first byte of transmission in UDR0 in mode.
+		receiving_counter = receiving_counter + 1;	
 	}
-	if(data == 'b')
+	else if(data == 0x00)
 	{
-		Drive_backwards(0.5, 0.5);
+		receiving_counter = 0;
 	}
-	if(data == 'l')
+	else if(receiving_counter == 1)
 	{
-		Rotate_counter_clockwise(0.5, 0.5);
+		data_buffer = data;
+		receiving_counter = receiving_counter + 1;
 	}
-	if(data == 'r')
+	else if(receiving_counter == 2)
 	{
-		Rotate_clockwise(0.5, 0.5);
+		data_buffer = (data_buffer << 8);
+		data_buffer = data_buffer | data;
+		receiving_counter = receiving_counter + 1;
 	}
-	if(data == 's')
-	{
-		Drive_forward(0, 0);
-	}*/
-
-	USART_Transmit('[');
-	USART_Transmit(data);
-	USART_Transmit(']');
-	USART_Transmit('\n');
 }
+
+
+//-------------------Initializations-------------------
 
 void USART_Init(unsigned int baud)
 {
 	/* Set baud rate */
 	UBRR0H = 0;
 	UBRR0L = 7;
-	/* Enable receiver and transmitter */
-	UCSR0B = (1<<RXEN0)|(1<<TXEN0);
+	
+	UCSR0B = (1<<RXEN0)|(1<<TXEN0); // Receiver and transmitter enabled.
 	/* Set frame format: 8data, 1stop bit */
-	UCSR0C = 0b00000110;
-}
-
-void USART_Transmit(char data)
-{
-	/* Wait for empty transmit buffer */
-	while (!(UCSR0A & (1<<UDRE0)));
-	/* Put data into buffer, sends the data */
-	UDR0 = data;
-}
-
-char USART_Receive(void)
-{
-	/* Wait for data to be received */
-	while (!(UCSR0A & (1<<RXC0)));
-	/* Get and return received data from buffer */
-	return UDR0;
+	UCSR0C = 0b00000110; // frame 
 }
 
 void Interrupt_Init()
 {
-	UCSR0B |= (1<<RXCIE0);
-	sei();
+	UCSR0B |= (1<<RXCIE0); // Enables receive interrupt
+	sei(); // Remove later
+}
+
+
+//----------------------Functions-----------------------
+
+void Data_transmission()
+{
+	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
+	UDR0 = mode_complete; // Puts the transmission data on the transmission register.
+	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
+	UDR0 = 0x00; // Sends stopbyte
 }
