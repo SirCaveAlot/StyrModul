@@ -14,8 +14,8 @@
 #include <stdbool.h>
 #include <util/delay.h>
 #include "PWM_SirCave.h"
-#include "PWM_grip_arm.h"
 #include "UART.h"
+#include "Sensor_values.h"
 
 
 //----------------Global variables-----------------------
@@ -25,12 +25,13 @@
 #define UBBR clkspd/16/BAUD-1
 
 // Received data
-char mode = 'S';
+char mode;
 uint8_t receiving_counter = 0;
 uint16_t data_buffer = 0;
+bool mode_changed;
 
 // Data for transmission
-char mode_complete = 'D';
+char mode_complete = 'd';
 uint8_t transmission_counter = 0;
 
 
@@ -41,12 +42,21 @@ ISR(USART0_RX_vect)
 	uint8_t data = UDR0;
 	if(receiving_counter == 0)
 	{
-		mode = data; // Store the first byte of transmission in UDR0 in mode.
-		receiving_counter = receiving_counter + 1;	
+		if(data == 'A')
+		{
+			autonomous = !autonomous;
+			mode = 's';
+		}
+		else
+		{
+			mode = data; // Store the first byte of transmission in UDR0 in mode.	
+		}
+		receiving_counter = receiving_counter + 1;
 	}
 	else if(data == 0x00)
 	{
 		receiving_counter = 0;
+		//mode_changed = true;		
 	}
 	else if(receiving_counter == 1)
 	{
@@ -84,10 +94,10 @@ void Interrupt_Init()
 
 //----------------------Functions-----------------------
 
-void Data_transmission()
+void Data_transmission(char data)
 {
 	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
-	UDR0 = mode_complete; // Puts the transmission data on the transmission register.
-	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
-	UDR0 = 0x00; // Sends stopbyte
+	UDR0 = data; // Puts the transmission data on the transmission register.
+// 	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
+// 	UDR0 = 0x00; // Sends stopbyte
 }

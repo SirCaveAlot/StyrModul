@@ -49,14 +49,14 @@ void Drive_backwards(float velocity_left, float velocity_right)
 
 void Rotate_clockwise(float velocity_left, float velocity_right)
 {
-	PORTA = (1 << PORTA0) | (0 << PORTA1); // Forward direction on the left side and backwards on the right side.
+	PORTA = (0 << PORTA0) | (1 << PORTA1); // Forward direction on the left side and backwards on the right side.
 	Set_speed_left(velocity_left); // velocity_left on left side
 	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
 void Rotate_counter_clockwise(float velocity_left, float velocity_right)
 {
-	PORTA = (0 << PORTA0) | (1 << PORTA1); // Forward direction on the right side and backwards on the left side.
+	PORTA = (1 << PORTA0) | (0 << PORTA1); // Forward direction on the right side and backwards on the left side.
 	Set_speed_left(velocity_left); // velocity_left on left side
 	Set_speed_right(velocity_right); // velocity_right on right side
 }
@@ -82,9 +82,18 @@ void Center_grip_arm()
 
 void Close_grip_arm()
 {
-	OCR2B = 14; // 1 ms with 128000 kHz
+	OCR2B = 15; // 1 ms with 128000 kHz
 }
 
 
 //----------------------LIDAR servo---------------------------
 
+void Rotate_LIDAR(float LIDAR_speed)
+{
+	OCR2A = LIDAR_speed*255;
+}
+
+void Stop_LIDAR()
+{
+	Rotate_LIDAR(0);
+}

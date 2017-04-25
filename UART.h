@@ -13,6 +13,8 @@ void USART_Init(unsigned int);
 
 void Interrupt_Init();
 
-void Data_transmission();
+void Data_transmission(char);
+
+extern char mode;
 
 #endif

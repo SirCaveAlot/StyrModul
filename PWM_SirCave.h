@@ -31,4 +31,8 @@ void Center_grip_arm();
 
 void Close_grip_arm();
 
+void Rotate_LIDAR(float);
+
+void Stop_LIDAR();
+
 #endif

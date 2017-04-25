@@ -9,61 +9,108 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
-#include "PWM_grip_arm.h"
+#include <stdbool.h>
+
 #include "PWM_SirCave.h"
 #include "UART.h"
+#include "SPI.h"
+#include "Control.h"
+#include "Sensor_values.h"
 
 #define clkspd 14745600
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
-char data;
-char buffer;
+//uint16_t data;
+//bool mode_changed; 
 
 int main(void)
-{
-	DDRD = 0xFE;
-	DDRA = 0xFF;
-	
+{	
 	Timer1_init();
 	Timer2_init();
 	USART_Init(UBBR);
+	Spi_init();
+	DDRD = 0xFA;
+	DDRA = 0xFF;
+	//mode_changed = false;
+	mode = 's';
+	Center_grip_arm();
 	Interrupt_Init();
-	Open_grip_arm();
-
+	
 	while(1)
 	{
-		while(data == 'f')
+// 		if(left_right)
+// 		{
+// 			Rotate_clockwise(0.9, 0.9);
+// 		}
+// 		else
+// 		{
+// 			Rotate_counter_clockwise(0.9, 0.9);
+// 		}
+		//Rotate_LIDAR();
+// 		PORTA |= (mode_changed << PORTA7);
+// 		if(mode_changed)
+// 		{
+// 			mode_changed = false;
+// 			_delay_ms(1000);
+// 			mode = 's';
+// 			Data_transmission('d');
+// 		}
+// 		
+		
+		if(autonomous) // Autonomous mode
 		{
-			Drive_forward(0.9, 0.9);
+			if(mode == 'f')
+			{
+				Hallway_control(true);
+			}
+			else if(mode == 's')
+			{
+				Drive_forward(0, 0);
+			}
 		}
-		while(data == 'b')
+		else // Manual mode
 		{
-			Drive_backwards(0.9, 0.9);
-		}
-		while(data == 'l')
-		{
-			Rotate_counter_clockwise(0.9, 0.9);
-		}
-		while(data == 'r')
-		{
-			Rotate_clockwise(0.9, 0.9);
-		}
-		while(data == 's')
-		{
-			Drive_forward(0, 0);
-		}
-		while(data == 'o')
-		{
-			Open_grip_arm();
-		}
-		while(data == 'c')
-		{
-			Close_grip_arm();
-		}
-		while(data == 'm')
-		{
-			Center_grip_arm();
+			if(mode == 'f')
+			{
+				Drive_forward(0.9, 0.9);
+			}
+			else if(mode == 'b')
+			{
+				Drive_backwards(0.9, 0.9);
+			}
+			else if(mode == 'l')
+			{
+				Rotate_counter_clockwise(0.9, 0.9);
+			}
+			else if(mode == 'r')
+			{
+				Rotate_clockwise(0.9, 0.9);
+			}
+			else if(mode == 's')
+			{
+				Drive_forward(0, 0);
+			}
+			else if(mode == 'o')
+			{
+				Open_grip_arm();
+			}
+			else if(mode == 'c')
+			{
+				Close_grip_arm();
+			}
+			else if(mode == 'm')
+			{
+				Center_grip_arm();
+			}
+			else if(mode == 't')
+			{
+				Rotate_LIDAR(0.5);
+			}
+			else if(mode == 'n')
+			{
+				Stop_LIDAR();
+			}
 		}
 	}
 }

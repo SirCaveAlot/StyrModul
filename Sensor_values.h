@@ -18,9 +18,14 @@ extern uint8_t velocity;
 extern uint8_t travelled_distance;
 extern uint8_t LIDAR_angle;
 extern uint8_t LIDAR_rotation_speed;
+extern bool autonomous;
 
-void IR_conversion_left(uint8_t);
+void IR_conversion(bool, uint8_t);
 
-void IR_conversion_right(uint8_t);
+//void IR_conversion_right(uint8_t);
+
+bool Left_side_detectable();
+
+bool Right_side_detectable();
 
 #endif /* SENSOR_VALUES_H_ */
