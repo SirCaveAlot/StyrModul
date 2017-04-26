@@ -72,7 +72,7 @@ void Timer2_init()
 
 void Open_grip_arm()
 {
-	OCR2B = 29; // 2 ms with 128000 kHz
+	OCR2B = 26; // 2 ms with 128000 kHz //29
 }
 
 void Center_grip_arm()
@@ -82,7 +82,7 @@ void Center_grip_arm()
 
 void Close_grip_arm()
 {
-	OCR2B = 15; // 1 ms with 128000 kHz
+	OCR2B = 17; // 1 ms with 128000 kHz //15
 }
 
 

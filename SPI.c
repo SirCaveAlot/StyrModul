@@ -23,76 +23,78 @@
 
 
 /* Queue structure */
-#define QUEUE_ELEMENTS 25
-#define QUEUE_SIZE (QUEUE_ELEMENTS + 1)
-uint8_t Queue[QUEUE_SIZE];
-int QueueIn, QueueOut;
+#define SPI_QUEUE_ELEMENTS 25
+#define SPI_QUEUE_SIZE (SPI_QUEUE_ELEMENTS + 1)
+uint8_t SPI_queue[SPI_QUEUE_SIZE];
+int SPI_queue_in, SPI_queue_out;
 
 bool left_right;
 
-uint8_t SPI_receiving_counter = 0;
+volatile uint8_t SPI_receiving_counter = 0;
 
 //---------------------Interrupts--------------
 
 ISR(SPI_STC_vect)
 {
-	uint8_t data = SPDR;
+	volatile uint8_t data = SPDR;
 	
-	if(data == 0x00 && SPI_receiving_counter == 0)
-	{
-		SPI_receiving_counter = 1;
-	}
-	else if(SPI_receiving_counter == 1)
-	{
-		IR_conversion(true, data);
-		//Store_in_IR_array(true, data);
-		SPI_receiving_counter = 2;
-	}
-	else if(SPI_receiving_counter == 2)
-	{
-		IR_conversion(false, data);
-		//Store_in_IR_array(false, data);
-		SPI_receiving_counter = 3;
-	}
-	else if(SPI_receiving_counter == 3)
-	{
-		// right tape sensor
-		SPI_receiving_counter = 4;
-	}
-	else if(SPI_receiving_counter == 4)
-	{
-		// left tape sensor
-		SPI_receiving_counter = 5;
-	}
-	else if(SPI_receiving_counter == 5)
-	{
-		// right wheel sensor
-		SPI_receiving_counter = 6;
-	}
-	else if(SPI_receiving_counter == 6)
-	{
-		// left wheel sensor
-		SPI_receiving_counter = 7;
-	}
-	else if(SPI_receiving_counter == 7)
-	{
-		gyro_rotation_speed = data;
-		SPI_receiving_counter = 8;
-	}
-	else if(SPI_receiving_counter == 8)
-	{
-		// High byte LIDAR
-		SPI_receiving_counter = 9;
-	}
-	else if(SPI_receiving_counter == 9)
-	{
-		// Low byte LIDAR
-		SPI_receiving_counter = 10;
-	}
-	else if(SPI_receiving_counter == 10 && data == 0xFF)
-	{
-		SPI_receiving_counter = 0;
-	}
+	SPI_queue_put(data);
+	
+// 	if(data == 0x00 && SPI_receiving_counter == 0)
+// 	{
+// 		SPI_receiving_counter = 1;
+// 	}
+// 	else if(SPI_receiving_counter == 1)
+// 	{
+// 		IR_conversion(true, data);
+// 		//Store_in_IR_array(true, data);
+// 		SPI_receiving_counter = 2;
+// 	}
+// 	else if(SPI_receiving_counter == 2)
+// 	{
+// 		IR_conversion(false, data);
+// 		//Store_in_IR_array(false, data);
+// 		SPI_receiving_counter = 3;
+// 	}
+// 	else if(SPI_receiving_counter == 3)
+// 	{
+// 		// right tape sensor
+// 		SPI_receiving_counter = 4;
+// 	}
+// 	else if(SPI_receiving_counter == 4)
+// 	{
+// 		// left tape sensor
+// 		SPI_receiving_counter = 5;
+// 	}
+// 	else if(SPI_receiving_counter == 5)
+// 	{
+// 		// right wheel sensor
+// 		SPI_receiving_counter = 6;
+// 	}
+// 	else if(SPI_receiving_counter == 6)
+// 	{
+// 		// left wheel sensor
+// 		SPI_receiving_counter = 7;
+// 	}
+// 	else if(SPI_receiving_counter == 7)
+// 	{
+// 		gyro_rotation_speed = data;
+// 		SPI_receiving_counter = 8;
+// 	}
+// 	else if(SPI_receiving_counter == 8)
+// 	{
+// 		// High byte LIDAR
+// 		SPI_receiving_counter = 9;
+// 	}
+// 	else if(SPI_receiving_counter == 9)
+// 	{
+// 		// Low byte LIDAR
+// 		SPI_receiving_counter = 10;
+// 	}
+// 	else if(SPI_receiving_counter == 10 && data == 0xFF)
+// 	{
+// 		SPI_receiving_counter = 0;
+// 	}
 	
 // 	
 // 	if(SPI_receiving_counter == 0)
@@ -129,6 +131,7 @@ void Spi_init()
 	DDRB=(1<<DDB6);               //MISO as OUTPUT
 	SPCR=(1<<SPIE)|(1<<SPE);      //Enable SPI && interrupt enable bit
 	SPDR=0;
+	SPI_queue_init();
 }
 
 
@@ -146,44 +149,92 @@ void Spi_init()
  */
 
 
-void QueueInit(void)
+void SPI_queue_init()
 {
-    QueueIn = QueueOut = 0;
+	SPI_queue_in = SPI_queue_out = 0;
 }
 
-void QueuePut(uint8_t new)
+void SPI_queue_put(uint8_t new)
 {
-    if(QueueIn == QueueOut && Queue[0] != 0)
-    {
-        return; /* Queue Full*/
-    }
-
-    Queue[QueueIn] = new;
-
-    QueueIn = (QueueIn + 1) % QUEUE_SIZE;
-
-   // return 0; // No errors
-}
-
-void QueueGet(uint8_t *old)
-{
-    if(QueueIn == QueueOut && Queue[0] == 0)
-    {
-        return; /* Queue Empty - nothing to get*/
-    }
-
-    *old = Queue[QueueOut];
-	
-	Queue[QueueOut] = 0;
-
-	//int statement = QueueIn - QueueOut;
-/*
-    for(int i = 0; i < statement; i++)
+	if(SPI_queue_in == ((SPI_queue_out + SPI_QUEUE_ELEMENTS) % SPI_QUEUE_SIZE))
 	{
-		Queue[QueueOut + i] = Queue[QueueOut + i + 1];
-	}*/
+		return; /* Queue Full*/
+	}
 
-	QueueOut = (QueueOut + 1) % QUEUE_SIZE;
+	SPI_queue[SPI_queue_in] = new;
 
-    //return 0; // No errors
+	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;
+
+	// return 0; // No errors
+}
+
+void SPI_queue_get(uint8_t *old)
+{
+	if(SPI_queue_in == SPI_queue_out)
+	{
+		return; /* Queue Empty - nothing to get*/
+	}
+
+	*old = SPI_queue[SPI_queue_out];
+	
+	SPI_queue[SPI_queue_out] = 0;
+
+	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
+
+	//return 0; // No errors
+}
+
+uint8_t SPI_queue_peek()
+{
+	return SPI_queue[SPI_queue_out];
+}
+
+void SPI_queue_remove()
+{
+	SPI_queue[SPI_queue_out] = 0;
+	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
+}
+
+uint8_t SPI_queue_length()
+{
+	if(SPI_queue_in == ((SPI_queue_out + SPI_QUEUE_ELEMENTS) % SPI_QUEUE_SIZE))
+	{
+		return SPI_QUEUE_ELEMENTS;
+	}
+	else if(SPI_queue_in == SPI_queue_out)
+	{
+		return 0;
+	}
+	else if(SPI_queue_out > SPI_queue_in)
+	{
+		return SPI_QUEUE_SIZE - (SPI_queue_out - SPI_queue_in);
+	}
+	else
+	{
+		return SPI_queue_in - SPI_queue_out;
+	}
+}
+
+void Dequeue_SPI_queue()
+{
+	if(SPI_queue_length() < 11)
+	{
+		return;
+	}
+	
+	uint8_t IR_value;
+	
+	SPI_queue_remove();
+	SPI_queue_get(&IR_value);
+	IR_conversion(true, IR_value);
+	SPI_queue_get(&IR_value);
+	IR_conversion(false, IR_value);
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
+	SPI_queue_remove();
 }
