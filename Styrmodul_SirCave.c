@@ -57,7 +57,6 @@ int main(void)
 // 			Data_transmission('d');
 // 		}
 // 		
-		
 		if(autonomous) // Autonomous mode
 		{
 			if(mode == 'f')

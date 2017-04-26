@@ -40,6 +40,7 @@ uint8_t transmission_counter = 0;
 ISR(USART0_RX_vect)
 {
 	uint8_t data = UDR0;
+	
 	if(receiving_counter == 0)
 	{
 		if(data == 'A')
