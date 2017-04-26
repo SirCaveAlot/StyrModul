@@ -10,17 +10,23 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-extern uint8_t right_distance;
-extern uint8_t left_distance;
 extern bool left_right;
-extern uint8_t SPI_receiving_counter;
+extern volatile uint8_t SPI_receiving_counter;
 
 void Spi_init();
 
-void QueueInit();
+void SPI_queue_init(void);
 
-void QueuePut(uint8_t new);
+void SPI_queue_put(uint8_t);
 
-void QueueGet(uint8_t *old);
+void SPI_queue_get(uint8_t *old);
+
+uint8_t SPI_queue_peek();
+
+void SPI_queue_remove();
+
+uint8_t SPI_queue_length();
+
+void Dequeue_SPI_queue();
 
 #endif

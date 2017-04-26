@@ -18,12 +18,12 @@
 #include "SPI.h"
 #include "UART.h"
 
-float error_prior1 = 0;
-float error_prior2 = 0;
-float error_prior3 = 0;
-float error_current1;
-float error_current2;
-float error_current3;
+volatile float error_prior1 = 0;
+volatile float error_prior2 = 0;
+volatile float error_prior3 = 0;
+volatile float error_current1;
+volatile float error_current2;
+volatile float error_current3;
 uint8_t proportional_gain1 = 10;
 uint8_t proportional_gain2 = 10;
 uint8_t proportional_gain3 = 10;
@@ -123,6 +123,7 @@ void Hallway_control(bool forward)
 	}
 	else
 	{
+
 		mode = 's';
 	}
 }
@@ -198,23 +199,6 @@ void Hallway_control_right()
 // 			PORTA = (0 << PORTA0) | (1 << PORTA1);
 // 		}
 // 	}
-///////////////////////////////////////////////////////////////////////
-	// 	else if (u_rot < 0.01) //IF SMALL STEER SIGNAL GIVES PROBLEMS
-	// 	{
-	// 		if (direction == 'H')
-	// 		 		{
-	// 		 			OCR1A = 0;
-	// 		 			OCR1B = 0;
-	// 		 			PORTA = (1 << PORTA0) | (0 << PORTA1);
-	// 		 		}
-	// 		 		else
-	// 		 		{
-	// 		 			OCR1A = 0;
-	// 		 			OCR1B = 0;
-	// 		 			PORTA = (0 << PORTA0) | (1 << PORTA1);
-	// 		 		}
-	// 	}
-////////////////////////////////////////////////////////////////////////
 // 	else
 // 	{
 // 		if (direction == 'H')
@@ -244,12 +228,6 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 	{
 		return velocity;
 	}
-///////////////////////////////////////////////////////////////////////
-// 	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
-// 	{
-// 		return 0;
-// 	}
-///////////////////////////////////////////////////////////////////////
 	else
 	{
 		return 1;
@@ -257,6 +235,7 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 }
 
 //----------------------------LIDAR control------------------------------------
+
 
 
 

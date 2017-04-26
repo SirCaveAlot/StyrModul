@@ -13,16 +13,17 @@
 #include <stdint.h>
 #include <avr/interrupt.h>
 
-uint16_t left_distance;
-uint16_t right_distance;
-uint8_t angle;
-uint8_t gyro_rotation_speed;
-uint8_t forward_distance;
-uint8_t velocity;
-uint8_t travelled_distance;
-uint8_t LIDAR_angle;
-uint8_t LIDAR_rotation_speed;
-bool autonomous;
+volatile uint16_t left_distance;
+volatile uint16_t right_distance;
+volatile uint8_t angle;
+volatile uint8_t gyro_rotation_speed;
+volatile uint8_t forward_distance;
+volatile uint8_t velocity;
+volatile uint8_t travelled_distance;
+volatile uint8_t LIDAR_angle;
+volatile uint8_t LIDAR_rotation_speed;
+volatile uint8_t LIDAR_rotation_turns = 0;
+volatile bool autonomous;
 
 uint16_t left_IR_array[2] = {0, 0};
 uint16_t right_IR_array[2] = {0, 0};
@@ -46,7 +47,6 @@ uint16_t LIDAR_array[2] = {0, 0};
 void IR_conversion(bool right, uint8_t IR_value)
 {
 	uint16_t distance = 10 * (55.25 * exp(-0.05762 * IR_value)) + (14.2 * exp(-0.009759 * IR_value));
-	
 	if(right)
 	{
 		right_distance = distance;
@@ -98,14 +98,14 @@ bool Right_side_detectable()
 //---------------------------Gyro----------------------------------
 
 
-
 //--------------------------LIDAR----------------------------------
 
 
 //--------------------------Wheels---------------------------------
 
 
-//-------------------------IR sensors------------------------------
+//--------------------------Magnets--------------------------------
+
 
 
 //-------------------------IR sensors------------------------------
