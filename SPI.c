@@ -82,11 +82,14 @@ ISR(SPI_STC_vect)
 	else if(SPI_receiving_counter == 8)
 	{
 		// High byte LIDAR
+//		front_distance = data;
 		SPI_receiving_counter = 9;
 	}
 	else if(SPI_receiving_counter == 9)
 	{
 		// Low byte LIDAR
+// 		front_distance = front_distance << 8; //left shift 8 bits
+// 		front_distance = front_distance + data; //add data
 		SPI_receiving_counter = 10;
 	}
 	else if(SPI_receiving_counter == 10 && data == 0xFF)

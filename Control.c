@@ -198,6 +198,23 @@ void Hallway_control_right()
 // 			PORTA = (0 << PORTA0) | (1 << PORTA1);
 // 		}
 // 	}
+///////////////////////////////////////////////////////////////////////
+	// 	else if (u_rot < 0.01) //IF SMALL STEER SIGNAL GIVES PROBLEMS
+	// 	{
+	// 		if (direction == 'H')
+	// 		 		{
+	// 		 			OCR1A = 0;
+	// 		 			OCR1B = 0;
+	// 		 			PORTA = (1 << PORTA0) | (0 << PORTA1);
+	// 		 		}
+	// 		 		else
+	// 		 		{
+	// 		 			OCR1A = 0;
+	// 		 			OCR1B = 0;
+	// 		 			PORTA = (0 << PORTA0) | (1 << PORTA1);
+	// 		 		}
+	// 	}
+////////////////////////////////////////////////////////////////////////
 // 	else
 // 	{
 // 		if (direction == 'H')
@@ -227,6 +244,12 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 	{
 		return velocity;
 	}
+///////////////////////////////////////////////////////////////////////
+// 	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
+// 	{
+// 		return 0;
+// 	}
+///////////////////////////////////////////////////////////////////////
 	else
 	{
 		return 1;
