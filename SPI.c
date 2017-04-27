@@ -1,4 +1,3 @@
-﻿<<<<<<< HEAD
 ﻿/*
  * SPI.c
  *
@@ -19,6 +18,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdbool.h>
+#include <math.h>
 #include "SPI.h"
 #include "Sensor_values.h"
 
@@ -26,7 +26,7 @@
 /* Queue structure */
 #define SPI_QUEUE_ELEMENTS 25
 #define SPI_QUEUE_SIZE (SPI_QUEUE_ELEMENTS + 1)
-uint8_t SPI_queue[SPI_QUEUE_SIZE];
+volatile uint8_t SPI_queue[SPI_QUEUE_SIZE];
 int SPI_queue_in, SPI_queue_out;
 
 bool left_right;
@@ -224,7 +224,8 @@ void Dequeue_SPI_queue()
 	}
 	
 	uint8_t IR_value;
-	
+	uint8_t length;
+	length = SPI_queue_length();
 	SPI_queue_remove();
 	SPI_queue_get(&IR_value);
 	IR_conversion(true, IR_value);
@@ -238,4 +239,12 @@ void Dequeue_SPI_queue()
 	SPI_queue_remove();
 	SPI_queue_remove();
 	SPI_queue_remove();
+	if(IR_value != 0)
+	{
+		PORTA |= (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+	}
+	else
+	{
+		PORTA &= 0x07;
+	}
 }

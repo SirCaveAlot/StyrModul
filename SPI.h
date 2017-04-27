@@ -1,9 +1,10 @@
-﻿﻿/*
- * SPI.h
- *
- * Created: 4/3/2017 2:11:20 PM
- *  Author: gusst967
- */ 
+﻿
+// ﻿
+//  * SPI.h
+//  *
+//  * Created: 4/3/2017 2:11:20 PM
+//  *  Author: gusst967
+
 
 
 #ifndef SPI_H_
@@ -28,5 +29,4 @@ uint8_t SPI_queue_length();
 
 void Dequeue_SPI_queue();
 
->>>>>>> origin/master
 #endif

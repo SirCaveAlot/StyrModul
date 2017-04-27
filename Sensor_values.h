@@ -1,9 +1,10 @@
-﻿﻿/*
- * Sensor_values.h
- *
- * Created: 4/20/2017 3:58:01 PM
- *  Author: gusst967
- */ 
+﻿//
+// /*
+//  * Sensor_values.h
+//  *
+//  * Created: 4/20/2017 3:58:01 PM
+//  *  Author: gusst967
+//  */ 
 
 
 #ifndef SENSOR_VALUES_H_
@@ -28,5 +29,4 @@ bool Left_side_detectable();
 
 bool Right_side_detectable();
 
->>>>>>> origin/master
 #endif /* SENSOR_VALUES_H_ */

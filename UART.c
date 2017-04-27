@@ -1,9 +1,9 @@
-﻿﻿/*
- * UART.c
- *
- * Created: 3/31/2017 2:22:01 PM
- *  Author: gusst967
- */ 
+﻿// ﻿/*
+//  * UART.c
+//  *
+//  * Created: 3/31/2017 2:22:01 PM
+//  *  Author: gusst967
+//  */ 
 
 #define F_CPU 14745600UL
 

@@ -49,11 +49,11 @@ void IR_conversion(bool right, uint8_t IR_value)
 	uint16_t distance = 10 * (55.25 * exp(-0.05762 * IR_value)) + (14.2 * exp(-0.009759 * IR_value));
 	if(right)
 	{
-		right_distance = distance;
+		right_distance = IR_value; //distance;
 	}
 	else
 	{
-		left_distance = distance;
+		left_distance = IR_value; //distance;
 	}	
 }
 

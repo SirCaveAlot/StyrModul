@@ -76,7 +76,7 @@ int main(void)
 		else
 		{
 			UART_queue_get(&mode); // Store in mode.
-		}
+		} 
 		
 		if(autonomous) // Autonomous mode
 		{
@@ -133,5 +133,4 @@ int main(void)
 			}
 		}
 	}
->>>>>>> origin/master
 }
