@@ -29,4 +29,5 @@ uint8_t UART_queue_length();
 
 extern uint8_t mode;
 
+>>>>>>> origin/master
 #endif
