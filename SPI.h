@@ -10,7 +10,6 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-extern bool left_right;
 extern volatile uint8_t SPI_receiving_counter;
 
 void Spi_init();
@@ -19,14 +18,18 @@ void SPI_queue_init(void);
 
 void SPI_queue_put(uint8_t);
 
-void SPI_queue_get(uint8_t *old);
+void SPI_queue_get(uint8_t *);
 
-uint8_t SPI_queue_peek();
+uint8_t SPI_queue_peek(uint8_t);
 
 void SPI_queue_remove();
 
-uint8_t SPI_queue_length();
+//uint8_t SPI_queue_length();
 
 void Dequeue_SPI_queue();
+
+void Start_dequeuing();
+
+void Test_SPI_queue();
 
 #endif

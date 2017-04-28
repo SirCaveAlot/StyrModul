@@ -33,9 +33,10 @@ int main(void)
 	DDRD = 0xFA;
 	DDRA = 0xFF;
 	//mode_changed = false;
-	mode = 's';
 	Center_grip_arm();
 	Interrupt_Init();
+	autonomous = false;
+	mode = 's';
 	
 	while(1)
 	{
@@ -65,18 +66,18 @@ int main(void)
 // 			uint8_t data2;
 // 			UART_queue_get(&data2);			
 // 		}
-		
+		//Test_SPI_queue();
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		
-		if(UART_queue_peek() == 'A')
-		{
-			UART_queue_remove(); // remove current element.
-			autonomous = !autonomous;
-		}
-		else
-		{
-			UART_queue_get(&mode); // Store in mode.
-		} 
+// 		if(UART_queue_peek() == 'A')
+// 		{
+// 			UART_queue_remove(); // remove current element.
+// 			autonomous = !autonomous;
+// 		}
+// 		else
+// 		{
+// 			UART_queue_get(&mode); // Store in mode.
+// 		} 
 		
 		if(autonomous) // Autonomous mode
 		{

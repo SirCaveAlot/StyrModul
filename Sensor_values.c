@@ -11,13 +11,14 @@
 #include <util/delay.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 #include <avr/interrupt.h>
 
-volatile uint16_t left_distance;
-volatile uint16_t right_distance;
+int left_distance;
+int right_distance;
 volatile uint8_t angle;
 volatile uint8_t gyro_rotation_speed;
-volatile uint8_t forward_distance;
+volatile uint16_t front_distance;
 volatile uint8_t velocity;
 volatile uint8_t travelled_distance;
 volatile uint8_t LIDAR_angle;
@@ -46,14 +47,14 @@ uint16_t LIDAR_array[2] = {0, 0};
 
 void IR_conversion(bool right, uint8_t IR_value)
 {
-	uint16_t distance = 10 * (55.25 * exp(-0.05762 * IR_value)) + (14.2 * exp(-0.009759 * IR_value));
+	int distance = 10 * ((55.25 * exp(-0.05762 * IR_value)) + (14.2 * exp(-0.009759 * IR_value)));
 	if(right)
 	{
-		right_distance = IR_value; //distance;
+		right_distance = distance;
 	}
 	else
 	{
-		left_distance = IR_value; //distance;
+		left_distance = distance;
 	}	
 }
 

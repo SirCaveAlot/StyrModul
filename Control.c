@@ -32,7 +32,6 @@ float derivative_gain2 = 0.5;
 float derivative_gain3 = 0.5;
 uint8_t iteration_time = 20; // 20 ms
 //
-float front_distance;
 float error_prior_speed;
 float error_current_speed;
 uint8_t proportional_gain_speed = 10;

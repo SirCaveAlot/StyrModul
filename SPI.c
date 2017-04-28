@@ -18,18 +18,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <math.h>
 #include "SPI.h"
 #include "Sensor_values.h"
 
 
 /* Queue structure */
-#define SPI_QUEUE_ELEMENTS 25
+#define SPI_QUEUE_ELEMENTS 40
 #define SPI_QUEUE_SIZE (SPI_QUEUE_ELEMENTS + 1)
 volatile uint8_t SPI_queue[SPI_QUEUE_SIZE];
-int SPI_queue_in, SPI_queue_out;
-
-bool left_right;
+uint8_t SPI_queue_in, SPI_queue_out;
+uint8_t SPI_queue_length;
+bool dequeue;
 
 volatile uint8_t SPI_receiving_counter = 0;
 
@@ -153,6 +154,8 @@ void Spi_init()
 void SPI_queue_init()
 {
 	SPI_queue_in = SPI_queue_out = 0;
+	SPI_queue_length = 0;
+	dequeue = false;
 }
 
 void SPI_queue_put(uint8_t new)
@@ -163,10 +166,8 @@ void SPI_queue_put(uint8_t new)
 	}
 
 	SPI_queue[SPI_queue_in] = new;
-
-	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;
-
-	// return 0; // No errors
+	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;	
+	SPI_queue_length++;
 }
 
 void SPI_queue_get(uint8_t *old)
@@ -176,75 +177,127 @@ void SPI_queue_get(uint8_t *old)
 		return; /* Queue Empty - nothing to get*/
 	}
 
-	*old = SPI_queue[SPI_queue_out];
-	
+	*old = SPI_queue[SPI_queue_out];	
 	SPI_queue[SPI_queue_out] = 0;
-
-	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
-
-	//return 0; // No errors
+	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;	
+	SPI_queue_length--;
 }
 
-uint8_t SPI_queue_peek()
+uint8_t SPI_queue_peek(uint8_t queue_place)
 {
-	return SPI_queue[SPI_queue_out];
+	return SPI_queue[queue_place];
 }
 
 void SPI_queue_remove()
 {
+	if(SPI_queue_in == SPI_queue_out)
+	{
+		return; // Queue Empty - nothing to remove
+	}
 	SPI_queue[SPI_queue_out] = 0;
 	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
+	SPI_queue_length--;
 }
 
-uint8_t SPI_queue_length()
-{
-	if(SPI_queue_in == ((SPI_queue_out + SPI_QUEUE_ELEMENTS) % SPI_QUEUE_SIZE))
-	{
-		return SPI_QUEUE_ELEMENTS;
-	}
-	else if(SPI_queue_in == SPI_queue_out)
-	{
-		return 0;
-	}
-	else if(SPI_queue_out > SPI_queue_in)
-	{
-		return SPI_QUEUE_SIZE - (SPI_queue_out - SPI_queue_in);
-	}
-	else
-	{
-		return SPI_queue_in - SPI_queue_out;
-	}
-}
+// uint8_t SPI_queue_length()
+// {
+// 	if(SPI_queue_in == ((SPI_queue_out + SPI_QUEUE_ELEMENTS) % SPI_QUEUE_SIZE))
+// 	{
+// 		return SPI_QUEUE_ELEMENTS;
+// 	}
+// 	else if(SPI_queue_in == SPI_queue_out)
+// 	{
+// 		return 0;
+// 	}
+// 	else if(SPI_queue_out > SPI_queue_in)
+// 	{
+// 		return SPI_QUEUE_SIZE - (SPI_queue_out - SPI_queue_in);
+// 	}
+// 	else
+// 	{
+// 		return SPI_queue_in - SPI_queue_out;
+// 	}
+// }
 
 void Dequeue_SPI_queue()
-{
-	if(SPI_queue_length() < 11)
+{	
+	Start_dequeuing();
+		
+	if(SPI_queue_length < 11)
 	{
+		dequeue = false;
 		return;
 	}
 	
-	uint8_t IR_value;
-	uint8_t length;
-	length = SPI_queue_length();
-	SPI_queue_remove();
-	SPI_queue_get(&IR_value);
-	IR_conversion(true, IR_value);
-	SPI_queue_get(&IR_value);
-	IR_conversion(false, IR_value);
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	SPI_queue_remove();
-	if(IR_value != 0)
+	if(dequeue)
 	{
-		PORTA |= (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+		uint8_t IR_value;
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_get(&IR_value);
+		IR_conversion(true, IR_value);
+		SPI_queue_get(&IR_value);
+		IR_conversion(false, IR_value);
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_remove();
+		SPI_queue_remove();
+		
+		if(IR_value != 0)
+		{
+			PORTA |= (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
+		}
+		else
+		{
+			PORTA &= 0x07;
+		}
+		dequeue = false;
 	}
 	else
 	{
-		PORTA &= 0x07;
+		SPI_queue_remove();
 	}
+}
+
+void Start_dequeuing()
+{
+	uint8_t first_value = SPI_queue_peek(SPI_queue_out);
+	uint8_t second_value = SPI_queue_peek(SPI_queue_out + 1);
+	
+	if(first_value == 0xFF && second_value == 0xFF)
+	{
+		dequeue = true;
+	}
+	else
+	{
+		dequeue = false;
+	}
+}
+
+void Test_SPI_queue()
+{
+// 	uint8_t data;
+// 	SPI_queue_put(0xFF);
+// 	SPI_queue_put(0xFF);
+// 	
+// 	for(uint8_t i = 1; i < 11; i++)
+// 	{
+// 		data = rand() / 200;
+// 		SPI_queue_put(data);
+// 	}
+
+ 	SPI_queue_put(0xFF);
+ 	SPI_queue_put(0xFF);
+	SPI_queue_put(100);
+	SPI_queue_put(30);
+	SPI_queue_put(100);
+	SPI_queue_put(40);
+	SPI_queue_put(100);
+	SPI_queue_put(40);
+	SPI_queue_put(100);
+	SPI_queue_put(40);
+	SPI_queue_put(100);
 }
