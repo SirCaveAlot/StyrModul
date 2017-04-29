@@ -60,7 +60,7 @@ void IR_conversion(bool right, uint8_t IR_value)
 
 bool Left_side_detectable()
 {
-	if(left_distance > 400)
+	if(left_distance > 300)
 	{
 		return false;
 	}
@@ -72,7 +72,7 @@ bool Left_side_detectable()
 
 bool Right_side_detectable()
 {
-	if(right_distance > 400)
+	if(right_distance > 300)
 	{
 		return false;
 	}

@@ -24,12 +24,12 @@ float error_prior3 = 0;
 float error_current1;
 float error_current2;
 float error_current3;
-uint8_t proportional_gain1 = 10;
-uint8_t proportional_gain2 = 10;
-uint8_t proportional_gain3 = 10;
-float derivative_gain1 = 0.5;
-float derivative_gain2 = 0.5;
-float derivative_gain3 = 0.5;
+uint8_t proportional_gain1 = 15;
+uint8_t proportional_gain2 = 15;
+uint8_t proportional_gain3 = 15;
+float derivative_gain1 = 0.7;
+float derivative_gain2 = 0.7;
+float derivative_gain3 = 0.7;
 uint8_t iteration_time = 20; // 20 ms
 //
 float error_prior_speed;
@@ -69,7 +69,7 @@ float Steer_signal1() //steersignal when both sides detectable
 {
 	error_prior1 = error_current1;
 	error_current1 = right_distance - left_distance;
-	float u1 = proportional_gain1*error_prior1 + derivative_gain1*(error_current1 - error_prior1)*(1/iteration_time);
+	float u1 = proportional_gain1*error_current1 + derivative_gain1*(error_current1 - error_prior1)*(1/iteration_time);
 	return u1;
 }
 
@@ -77,7 +77,7 @@ float Steer_signal2() //steersignal when right side detectable
 {
 	error_prior2 = error_current2;
 	error_current2 = right_distance - 100; // Control using mm
-	float u2 = proportional_gain2*error_prior2 + derivative_gain2*(error_current2 - error_prior2)*(1/iteration_time);
+	float u2 = proportional_gain2*error_current2 + derivative_gain2*(error_current2 - error_prior2)*(1/iteration_time);
 	return u2;
 }
 
@@ -85,7 +85,7 @@ float Steer_signal3() //steersignal when left side detectable
 {
 	error_prior3 = error_current3;
 	error_current3 = 100 - left_distance; // Control using mm
-	float u3 = proportional_gain3*error_prior3 + derivative_gain3*(error_current3 - error_prior3)*(1/iteration_time);
+	float u3 = proportional_gain3*error_current3 + derivative_gain3*(error_current3 - error_prior3)*(1/iteration_time);
 	return u3;
 }
 
@@ -122,56 +122,72 @@ void Hallway_control(bool forward)
 	}
 	else
 	{
-		mode = 's';
+		Drive_forward(0, 0);
 	}
 }
 
 void Hallway_control_both()
 {
 	float steer_signal_1 = Steer_signal1();
-	float set_speed = 0.3; //Set_speed();, 
+	float set_speed = 0.5; //Set_speed();, 
 	
 	if (error_current1 >= 0)
 	{
-		OCR1A = set_speed*ICR1;
-		OCR1B = set_speed*ICR1 - steer_signal_1;
+		if(set_speed*ICR1 - steer_signal_1 < 0)
+		{
+			OCR1A = 0; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
+		else
+		{
+			OCR1A = set_speed*ICR1 - steer_signal_1; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
 	}
 	else
 	{
-		OCR1A = set_speed*ICR1 + steer_signal_1; // Steersignal < 0
-		OCR1B = set_speed*ICR1;
+		if(set_speed * ICR1 + steer_signal_1 < 0)
+		{
+			OCR1A = set_speed * ICR1; // Right
+			OCR1B = 0; // Left
+		}
+		else
+		{
+			OCR1A = set_speed * ICR1; // Steersignal < 0 Right
+			OCR1B = set_speed * ICR1 + steer_signal_1; //Left
+		}
 	}
 }
 
 void Hallway_control_left()
 {
 	float steer_signal_3 = Steer_signal3();
-	float set_speed = 0.3; //Set_speed();
+	float set_speed = 0.5; //Set_speed();
 	if (error_current3 >= 0)
 	{
-		OCR1A = set_speed*ICR1;
-		OCR1B = set_speed*ICR1 - steer_signal_3;
+		OCR1A = set_speed*ICR1 - steer_signal_3;
+		OCR1B = set_speed*ICR1;
 	}
 	else
 	{
-		OCR1A = set_speed*ICR1 + steer_signal_3; // Steersignal < 0
-		OCR1B = set_speed*ICR1;
+		OCR1A = set_speed*ICR1; // Steersignal < 0
+		OCR1B = set_speed*ICR1 + steer_signal_3;
 	}
 }
 
 void Hallway_control_right()
 {
 	float steer_signal_2 = Steer_signal2();
-	float set_speed = 0.3; //Set_speed();
+	float set_speed = 0.5; //Set_speed();
 	if (error_current1 >= 0)
 	{
-		OCR1A = set_speed*ICR1;
-		OCR1B = set_speed*ICR1 - steer_signal_2;
+		OCR1A = set_speed*ICR1 - steer_signal_2;
+		OCR1B = set_speed*ICR1;
 	}
 	else
 	{
-		OCR1A = set_speed*ICR1 + steer_signal_2; // Steersignal < 0
-		OCR1B = set_speed*ICR1;
+		OCR1A = set_speed*ICR1; // Steersignal < 0
+		OCR1B = set_speed*ICR1 + steer_signal_2;
 	}
 }
 //----------------------------Rotation control------------------------------------
@@ -238,7 +254,7 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 {
 	error_prior_speed = error_current_speed;
 	error_current_speed = front_distance - 25; //stops when LIDAR is 25 cm from obstacle ahead
-	float velocity = proportional_gain_speed*error_prior_speed + derivative_gain_speed*(error_current_speed - error_prior_speed)*(1/iteration_time);
+	float velocity = proportional_gain_speed*error_current_speed + derivative_gain_speed*(error_current_speed - error_prior_speed)*(1/iteration_time);
 	if (velocity <= 1)
 	{
 		return velocity;

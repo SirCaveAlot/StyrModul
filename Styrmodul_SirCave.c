@@ -35,8 +35,9 @@ int main(void)
 	//mode_changed = false;
 	Center_grip_arm();
 	Interrupt_Init();
-	autonomous = false;
-	mode = 's';
+	_delay_ms(1000);
+	autonomous = true;
+	mode = 'f';
 	
 	while(1)
 	{
@@ -69,15 +70,15 @@ int main(void)
 		//Test_SPI_queue();
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		
-// 		if(UART_queue_peek() == 'A')
-// 		{
-// 			UART_queue_remove(); // remove current element.
-// 			autonomous = !autonomous;
-// 		}
-// 		else
-// 		{
-// 			UART_queue_get(&mode); // Store in mode.
-// 		} 
+		if(UART_queue_peek() == 'A')
+		{
+			UART_queue_remove(); // remove current element.
+			autonomous = !autonomous;
+		}
+		else
+		{
+			UART_queue_get(&mode); // Store in mode.
+		} 
 		
 		if(autonomous) // Autonomous mode
 		{

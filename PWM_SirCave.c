@@ -23,14 +23,14 @@ void Timer1_init()
 	ICR1 = 4607; // Top-value PWM. (2559 128kHz)
 }
 
-void Set_speed_right(float velocity_right) // Sets the speed on the right side to 0 < velocity_right < 1. 
+void Set_speed_left(float velocity) // Sets the speed on the left side to 0 < velocity < 1. 
 {
-	OCR1B = velocity_right*ICR1;
+	OCR1B = velocity*ICR1;
 }
 
-void Set_speed_left(float velocity_left) // Sets the speed on the left side to 0 < velocity_right < 1.
+void Set_speed_right(float velocity) // Sets the speed on the right side to 0 < velocity < 1.
 {
-	OCR1A = velocity_left*ICR1;
+	OCR1A = velocity*ICR1;
 }
 
 void Drive_forward(float velocity_left, float velocity_right)
