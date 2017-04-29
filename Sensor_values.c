@@ -47,7 +47,7 @@ uint16_t LIDAR_array[2] = {0, 0};
 
 void IR_conversion(bool right, uint8_t IR_value)
 {
-	int distance = 10 * ((55.25 * exp(-0.05762 * IR_value)) + (14.2 * exp(-0.009759 * IR_value)));
+	int distance = 10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value)));
 	if(right)
 	{
 		right_distance = distance;

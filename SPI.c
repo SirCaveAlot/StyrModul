@@ -231,6 +231,7 @@ void Dequeue_SPI_queue()
 	
 	if(dequeue)
 	{
+		PORTA = 0b00010000;
 		uint8_t IR_value;
 		SPI_queue_remove();
 		SPI_queue_remove();
@@ -246,15 +247,8 @@ void Dequeue_SPI_queue()
 		SPI_queue_remove();
 		SPI_queue_remove();
 		
-		if(IR_value != 0)
-		{
-			PORTA |= (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7);
-		}
-		else
-		{
-			PORTA &= 0x07;
-		}
 		dequeue = false;
+		PORTA = 0b00000000;
 	}
 	else
 	{

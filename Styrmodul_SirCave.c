@@ -36,8 +36,8 @@ int main(void)
 	Center_grip_arm();
 	Interrupt_Init();
 	_delay_ms(1000);
-	autonomous = true;
-	mode = 'f';
+	autonomous = false;
+	mode = 's';
 	
 	while(1)
 	{
