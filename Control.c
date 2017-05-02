@@ -18,24 +18,24 @@
 #include "SPI.h"
 #include "UART.h"
 
-volatile float error_prior1 = 0;
-volatile float error_prior2 = 0;
-volatile float error_prior3 = 0;
-volatile float error_current1;
-volatile float error_current2;
-volatile float error_current3;
-volatile uint8_t proportional_gain1 = 8;
-volatile uint8_t proportional_gain2 = 8;
-volatile uint8_t proportional_gain3 = 8;
-volatile float derivative_gain1 = 0.7;
-volatile float derivative_gain2 = 0.7;
-volatile float derivative_gain3 = 0.7;
-volatile float iteration_time = 0.000944; // 20 ms
+float error_prior1 = 0;
+float error_prior2 = 0;
+float error_prior3 = 0;
+float error_current1;
+float error_current2;
+float error_current3;
+uint8_t proportional_gain1 = 8;
+uint8_t proportional_gain2 = 8;
+uint8_t proportional_gain3 = 8;
+float derivative_gain1 = 0.7;
+float derivative_gain2 = 0.7;
+float derivative_gain3 = 0.7;
+float iteration_time = 0.000944; // 20 ms
 //
-volatile float error_prior_speed;
-volatile float error_current_speed;
-volatile uint8_t proportional_gain_speed = 1;
-volatile float derivative_gain_speed = 1;
+float error_prior_speed;
+float error_current_speed;
+uint8_t proportional_gain_speed = 10;
+float derivative_gain_speed = 0.5;
 //
 //
 float rotation_speed;
@@ -129,7 +129,7 @@ void Hallway_control(bool forward)
 void Hallway_control_both()
 {
 	float steer_signal_1 = Steer_signal1();
-	float set_speed =  Set_speed();    //0.5 
+	float set_speed = 0.5; //Set_speed();, 
 	
 	if (error_current1 >= 0)
 	{
@@ -162,64 +162,32 @@ void Hallway_control_both()
 void Hallway_control_left()
 {
 	float steer_signal_3 = Steer_signal3();
-	float set_speed = Set_speed(); //0.5
+	float set_speed = 0.5; //Set_speed();
 	if (error_current3 >= 0)
 	{
-		if(set_speed*ICR1 - steer_signal_3 < 0)
-		{
-			OCR1A = 0; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
-		else
-		{
-			OCR1A = set_speed*ICR1 - steer_signal_3; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
+		OCR1A = set_speed*ICR1 - steer_signal_3;
+		OCR1B = set_speed*ICR1;
 	}
 	else
 	{
-		if(set_speed*ICR1 - steer_signal_3 < 0)
-		{
-			OCR1A = set_speed*ICR1; // Right
-			OCR1B = 0; // Left
-		}
-		else
-		{
-			OCR1A = set_speed*ICR1; // Steersignal < 0  // Right
-			OCR1B = set_speed*ICR1 + steer_signal_3; // Left
-		}
+		OCR1A = set_speed*ICR1; // Steersignal < 0
+		OCR1B = set_speed*ICR1 + steer_signal_3;
 	}
 }
 
 void Hallway_control_right()
 {
 	float steer_signal_2 = Steer_signal2();
-	float set_speed = Set_speed();    //0.5
-	if (error_current1 >= 0) 
+	float set_speed = 0.5; //Set_speed();
+	if (error_current1 >= 0)
 	{
-		if(set_speed*ICR1 - steer_signal_2 < 0)
-		{
-			OCR1A = 0; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
-		else 
-		{
-			OCR1A = set_speed*ICR1 - steer_signal_2; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
+		OCR1A = set_speed*ICR1 - steer_signal_2;
+		OCR1B = set_speed*ICR1;
 	}
 	else
 	{
-		if(set_speed*ICR1 - steer_signal_2 < 0)
-		{
-			OCR1A = set_speed*ICR1; // Right
-			OCR1B = 0; // Left
-		}
-		else
-		{
-			OCR1A = set_speed*ICR1; // Steersignal < 0 // Right
-			OCR1B = set_speed*ICR1 + steer_signal_2; // Left
-		}
+		OCR1A = set_speed*ICR1; // Steersignal < 0
+		OCR1B = set_speed*ICR1 + steer_signal_2;
 	}
 }
 //----------------------------Rotation control------------------------------------
@@ -291,20 +259,15 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 	{
 		return velocity;
 	}
-
-	else if (error_current_speed <= 0) // IF TO CLOSE
-	{
-		return 0;
-	} 
-	
-	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
-	{
-		return 0;
-	}
-	
+///////////////////////////////////////////////////////////////////////
+// 	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
+// 	{
+// 		return 0;
+// 	}
+///////////////////////////////////////////////////////////////////////
 	else
 	{
-		return 0.5;
+		return 1;
 	}
 }
 

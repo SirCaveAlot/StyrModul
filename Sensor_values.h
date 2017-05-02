@@ -10,8 +10,8 @@
 #ifndef SENSOR_VALUES_H_
 #define SENSOR_VALUES_H_
 
-extern uint8_t left_distance;
-extern uint8_t right_distance;
+extern volatile uint8_t left_distance;
+extern volatile uint8_t right_distance;
 extern volatile uint8_t angle;
 extern volatile uint8_t gyro_rotation_speed;
 extern volatile uint16_t front_distance;
@@ -19,7 +19,7 @@ extern volatile uint8_t velocity;
 extern volatile uint8_t travelled_distance;
 extern volatile uint8_t LIDAR_angle;
 extern volatile uint8_t LIDAR_rotation_speed;
-extern bool autonomous;
+extern volatile bool autonomous;
 
 void IR_conversion(bool, uint8_t);
 

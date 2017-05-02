@@ -8,9 +8,9 @@
 #define F_CPU 14745600UL
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdbool.h>
-#include <avr/interrupt.h>
 
 #include "PWM_SirCave.h"
 #include "UART.h"
@@ -33,13 +33,13 @@ int main(void)
 	Spi_init();
 	DDRD = 0xFA;
 	DDRA = 0xFF;
-	//mode_changed = false;
-	Center_grip_arm();
 	autonomous = true;
 	mode = 'f';
-	_delay_ms(1000);
+	Center_grip_arm();
+	//Test_UART_queue();
 	sei();
-	
+	_delay_ms(1000);
+		
 	while(1)
 	{
 // 		if(left_right)
@@ -71,7 +71,7 @@ int main(void)
 		//Test_SPI_queue();
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		Dequeue_UART_queue();
-// 		if(UART_queue_peek(UART_queue_out) == 'A')
+// 		if(UART_queue_peek() == 'A')
 // 		{
 // 			UART_queue_remove(); // remove current element.
 // 			autonomous = !autonomous;
@@ -80,7 +80,7 @@ int main(void)
 // 		{
 // 			UART_queue_get(&mode); // Store in mode.
 // 		} 
-		
+// 		
 		if(autonomous) // Autonomous mode
 		{
 			if(mode == 'f')

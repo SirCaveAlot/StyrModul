@@ -36,7 +36,7 @@ uint8_t transmission_counter = 0;
 
 /* Queue structure */
 #define UART_QUEUE_ELEMENTS 25
-#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is QUEUE_ELEMENTS
+#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is UART_QUEUE_ELEMENTS
 volatile uint8_t UART_queue[UART_QUEUE_SIZE];
 uint8_t UART_queue_in, UART_queue_out;
 uint8_t UART_queue_length;
@@ -113,6 +113,7 @@ void Data_transmission(char data)
 void UART_queue_init(void)
 {
     UART_queue_in = UART_queue_out = 0;
+	UART_queue_length = 0;
 }
 
 void UART_queue_put(uint8_t new)
@@ -123,10 +124,8 @@ void UART_queue_put(uint8_t new)
     }
 
     UART_queue[UART_queue_in] = new;
-
     UART_queue_in = (UART_queue_in + 1) % UART_QUEUE_SIZE;
-
-   // return 0; // No errors
+	UART_queue_length++;
 }
 
 void UART_queue_get(uint8_t *old)
@@ -136,31 +135,61 @@ void UART_queue_get(uint8_t *old)
         return; /* Queue Empty - nothing to get*/
     }
 
-    *old = UART_queue[UART_queue_out];
-	
+    *old = UART_queue[UART_queue_out];	
 	UART_queue[UART_queue_out] = 0;
-
 	UART_queue_out = (UART_queue_out + 1) % UART_QUEUE_SIZE;
-
-    //return 0; // No errors
+	UART_queue_length--;
 }
 
-uint8_t UART_queue_peek(uint8_t queue_index)
+uint8_t UART_queue_peek()
 {
-	return UART_queue[queue_index];
+	return UART_queue[UART_queue_out];
 }
 
 void UART_queue_remove()
 {
 	if(UART_queue_in == UART_queue_out)
 	{
-		return; // Queue Empty - nothing to remove
+		return; /* Queue Empty - nothing to get*/
 	}
+	
 	UART_queue[UART_queue_out] = 0;
 	UART_queue_out = (UART_queue_out + 1) % UART_QUEUE_SIZE;
 	UART_queue_length--;
 }
 
+void Dequeue_UART_queue()
+{
+	if(UART_queue_peek(UART_queue_out) == 'A')
+	{
+		UART_queue_remove(); // remove current element.
+		autonomous = !autonomous;
+	}
+	else if(UART_queue_peek(UART_queue_out) == 0x00)
+	{
+		UART_queue_remove();
+	}
+	else
+	{
+		UART_queue_get(&mode); // Store in mode.
+	}
+}
+
+void Test_UART_queue()
+{
+	UART_queue_put('A');
+	UART_queue_put(0x00);
+	UART_queue_put('l');
+	UART_queue_put(0x00);
+	UART_queue_put('A');
+	UART_queue_put(0x00);
+	UART_queue_put('f');
+	UART_queue_put(0x00);
+	UART_queue_put('r');
+	UART_queue_put(0x00);
+	UART_queue_put('b');
+	UART_queue_put(0x00);
+}
 // uint8_t UART_queue_length()
 // {
 // 	if(UART_queue_in == ((UART_queue_out + QUEUE_ELEMENTS) % QUEUE_SIZE))
@@ -178,42 +207,5 @@ void UART_queue_remove()
 // 	else
 // 	{
 // 		return UART_queue_in - UART_queue_out;
-// 	}
-// }
-
-void Dequeue_UART_queue()
-{
-	uint8_t first_byte = UART_queue_peek(UART_queue_out);
-	//uint8_t second_byte = UART_queue_peek(UART_queue_out + 1);
-	
-	if(UART_queue_length < 2)
-	{
-		return;
-	}
-	
-	if(first_byte == 'A')
-	{
-		autonomous = !autonomous;
-		UART_queue_remove();
-		UART_queue_remove();
-	}
-	else
-	{
-		UART_queue_get(&mode);
-		UART_queue_remove();
-	}
-}
-
-// void Start_dequeuing();
-// {
-// 
-// 	
-// 	if(second_byte == 0x00)
-// 	{
-// 		dequeue = true;
-// 	}
-// 	else
-// 	{
-// 		dequeue = false;
 // 	}
 // }
