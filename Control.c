@@ -18,19 +18,19 @@
 #include "SPI.h"
 #include "UART.h"
 
-float error_prior1 = 0;
-float error_prior2 = 0;
-float error_prior3 = 0;
-float error_current1;
-float error_current2;
-float error_current3;
-uint8_t proportional_gain1 = 25;
-uint8_t proportional_gain2 = 25;
-uint8_t proportional_gain3 = 25;
-float derivative_gain1 = 0.7;
-float derivative_gain2 = 0.7;
-float derivative_gain3 = 0.7;
-float iteration_time = 0.000944; // 20 ms
+volatile float error_prior1 = 0;
+volatile float error_prior2 = 0;
+volatile float error_prior3 = 0;
+volatile float error_current1;
+volatile float error_current2;
+volatile float error_current3;
+volatile uint8_t proportional_gain1 = 10;
+volatile uint8_t proportional_gain2 = 10;
+volatile uint8_t proportional_gain3 = 10;
+volatile float derivative_gain1 = 0.7;
+volatile float derivative_gain2 = 0.7;
+volatile float derivative_gain3 = 0.7;
+volatile float iteration_time = 0.000944; // 20 ms
 //
 float error_prior_speed;
 float error_current_speed;

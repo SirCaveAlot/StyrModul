@@ -14,8 +14,8 @@
 #include <math.h>
 #include <avr/interrupt.h>
 
-int left_distance;
-int right_distance;
+uint8_t left_distance;
+uint8_t right_distance;
 volatile uint8_t angle;
 volatile uint8_t gyro_rotation_speed;
 volatile uint16_t front_distance;
@@ -24,7 +24,7 @@ volatile uint8_t travelled_distance;
 volatile uint8_t LIDAR_angle;
 volatile uint8_t LIDAR_rotation_speed;
 volatile uint8_t LIDAR_rotation_turns = 0;
-volatile bool autonomous;
+bool autonomous;
 
 uint16_t left_IR_array[2] = {0, 0};
 uint16_t right_IR_array[2] = {0, 0};

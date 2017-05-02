@@ -183,9 +183,9 @@ void SPI_queue_get(uint8_t *old)
 	SPI_queue_length--;
 }
 
-uint8_t SPI_queue_peek(uint8_t queue_place)
+uint8_t SPI_queue_peek(uint8_t queue_index)
 {
-	return SPI_queue[queue_place];
+	return SPI_queue[queue_index];
 }
 
 void SPI_queue_remove()

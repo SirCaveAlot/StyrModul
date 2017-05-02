@@ -10,6 +10,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdbool.h>
+#include <avr/interrupt.h>
 
 #include "PWM_SirCave.h"
 #include "UART.h"
@@ -34,10 +35,10 @@ int main(void)
 	DDRA = 0xFF;
 	//mode_changed = false;
 	Center_grip_arm();
-	Interrupt_Init();
+	autonomous = true;
+	mode = 'f';
 	_delay_ms(1000);
-	autonomous = false;
-	mode = 's';
+	sei();
 	
 	while(1)
 	{
@@ -69,16 +70,16 @@ int main(void)
 // 		}
 		//Test_SPI_queue();
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
-		
-		if(UART_queue_peek() == 'A')
-		{
-			UART_queue_remove(); // remove current element.
-			autonomous = !autonomous;
-		}
-		else
-		{
-			UART_queue_get(&mode); // Store in mode.
-		} 
+		Dequeue_UART_queue();
+// 		if(UART_queue_peek(UART_queue_out) == 'A')
+// 		{
+// 			UART_queue_remove(); // remove current element.
+// 			autonomous = !autonomous;
+// 		}
+// 		else
+// 		{
+// 			UART_queue_get(&mode); // Store in mode.
+// 		} 
 		
 		if(autonomous) // Autonomous mode
 		{
