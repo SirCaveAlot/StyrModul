@@ -10,6 +10,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdbool.h>
+#include <avr/interrupt.h>
 
 #include "PWM_SirCave.h"
 #include "UART.h"
@@ -32,12 +33,12 @@ int main(void)
 	Spi_init();
 	DDRD = 0xFA;
 	DDRA = 0xFF;
-	//mode_changed = false;
 	Center_grip_arm();
-	Interrupt_Init();
+	autonomous = true;
+	mode = 'f';
+	sei();
 	_delay_ms(1000);
-	autonomous = false;
-	mode = 's';
+	
 	
 	while(1)
 	{

@@ -91,13 +91,13 @@ void USART_Init(unsigned int baud)
 	UCSR0B = (1<<RXEN0)|(1<<TXEN0); // Receiver and transmitter enabled.
 	/* Set frame format: 8data, 1stop bit */
 	UCSR0C = 0b00000110; // frame 
+	UART_interrupt_Init();
 	UART_queue_init();
 }
 
-void Interrupt_Init()
+void UART_interrupt_Init()
 {
 	UCSR0B |= (1<<RXCIE0); // Enables receive interrupt
-	sei(); // Remove later
 }
 
 

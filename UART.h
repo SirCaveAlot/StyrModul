@@ -11,7 +11,7 @@
 
 void USART_Init(unsigned int);
 
-void Interrupt_Init();
+void UART_interrupt_Init();
 
 void Data_transmission(char);
 

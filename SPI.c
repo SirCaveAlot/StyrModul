@@ -40,7 +40,17 @@ ISR(SPI_STC_vect)
 {
 	volatile uint8_t data = SPDR;
 	
+	if(data == 0xFF)
+	{
+		PORTA = 0b00100000;
+	}
+	else
+	{
+		PORTA = 0b00000000;
+	}
+	
 	SPI_queue_put(data);
+	
 	
 // 	if(data == 0x00 && SPI_receiving_counter == 0)
 // 	{

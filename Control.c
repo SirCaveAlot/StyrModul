@@ -24,12 +24,12 @@ float error_prior3 = 0;
 float error_current1;
 float error_current2;
 float error_current3;
-uint8_t proportional_gain1 = 25;
-uint8_t proportional_gain2 = 25;
-uint8_t proportional_gain3 = 25;
-float derivative_gain1 = 0.7;
-float derivative_gain2 = 0.7;
-float derivative_gain3 = 0.7;
+uint8_t proportional_gain1 = 5;
+uint8_t proportional_gain2 = 5;
+uint8_t proportional_gain3 = 5;
+float derivative_gain1 = 0.5;
+float derivative_gain2 = 0.5;
+float derivative_gain3 = 0.5;
 float iteration_time = 0.000944; // 20 ms
 //
 float error_prior_speed;
