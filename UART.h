@@ -11,21 +11,23 @@
 
 void USART_Init(unsigned int);
 
-void UART_interrupt_Init();
-
 void Data_transmission(char);
 
 void UART_queue_init(void);
 
 void UART_queue_put(uint8_t);
 
-void UART_queue_get(uint8_t *old);
+void UART_queue_get(uint8_t *);
 
-uint8_t UART_queue_peek();
+uint8_t UART_queue_peek(uint8_t);
 
 void UART_queue_remove();
 
-uint8_t UART_queue_length();
+void Dequeue_UART_queue();
+
+extern uint8_t UART_queue_length;
+
+extern uint8_t UART_queue_out;
 
 extern uint8_t mode;
 

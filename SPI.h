@@ -24,8 +24,6 @@ uint8_t SPI_queue_peek(uint8_t);
 
 void SPI_queue_remove();
 
-//uint8_t SPI_queue_length();
-
 void Dequeue_SPI_queue();
 
 void Start_dequeuing();

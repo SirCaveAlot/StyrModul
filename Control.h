@@ -29,4 +29,6 @@ void Hallway_control_right();
 
 float Set_speed();
 
+void Speed_test();
+
 #endif /* CONTROL_H_ */

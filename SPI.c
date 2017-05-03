@@ -40,17 +40,7 @@ ISR(SPI_STC_vect)
 {
 	volatile uint8_t data = SPDR;
 	
-	if(data == 0xFF)
-	{
-		PORTA = 0b00100000;
-	}
-	else
-	{
-		PORTA = 0b00000000;
-	}
-	
 	SPI_queue_put(data);
-	
 	
 // 	if(data == 0x00 && SPI_receiving_counter == 0)
 // 	{
@@ -193,9 +183,9 @@ void SPI_queue_get(uint8_t *old)
 	SPI_queue_length--;
 }
 
-uint8_t SPI_queue_peek(uint8_t queue_place)
+uint8_t SPI_queue_peek(uint8_t queue_index)
 {
-	return SPI_queue[queue_place];
+	return SPI_queue[queue_index];
 }
 
 void SPI_queue_remove()
@@ -241,24 +231,24 @@ void Dequeue_SPI_queue()
 	
 	if(dequeue)
 	{
-		PORTA = 0b00010000;
+		//PORTA |= (1 << 4);
 		uint8_t IR_value;
 		SPI_queue_remove();
 		SPI_queue_remove();
-		SPI_queue_get(&IR_value);
+		SPI_queue_get(&IR_value); // IR right
 		IR_conversion(true, IR_value);
-		SPI_queue_get(&IR_value);
+		SPI_queue_get(&IR_value); // IR left
 		IR_conversion(false, IR_value);
-		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
+		SPI_queue_remove(); // Right tape
+		SPI_queue_remove(); // Left tape
+		SPI_queue_remove(); // Right wheel
+		SPI_queue_remove(); // Left wheel
+		SPI_queue_remove(); // Gyro
+		SPI_queue_remove(); // LIDAR high
+		SPI_queue_remove(); // LIDAR low
 		
 		dequeue = false;
-		PORTA = 0b00000000;
+		//PORTA &= ~(1 << 4);
 	}
 	else
 	{
@@ -283,16 +273,6 @@ void Start_dequeuing()
 
 void Test_SPI_queue()
 {
-// 	uint8_t data;
-// 	SPI_queue_put(0xFF);
-// 	SPI_queue_put(0xFF);
-// 	
-// 	for(uint8_t i = 1; i < 11; i++)
-// 	{
-// 		data = rand() / 200;
-// 		SPI_queue_put(data);
-// 	}
-
  	SPI_queue_put(0xFF);
  	SPI_queue_put(0xFF);
 	SPI_queue_put(100);

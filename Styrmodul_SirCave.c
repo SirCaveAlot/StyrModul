@@ -22,9 +22,6 @@
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
-//uint16_t data;
-//bool mode_changed; 
-
 int main(void)
 {	
 	Timer1_init();
@@ -33,34 +30,17 @@ int main(void)
 	Spi_init();
 	DDRD = 0xFA;
 	DDRA = 0xFF;
+	DDRC |= 0b00000011;
 	Center_grip_arm();
-	autonomous = true;
-	mode = 'f';
-	sei();
+	UART_queue_put('A');
+	UART_queue_put(0x00);
+	UART_queue_put('f');
+	UART_queue_put(0x00);
 	_delay_ms(1000);
-	
+	sei();
 	
 	while(1)
-	{
-// 		if(left_right)
-// 		{
-// 			Rotate_clockwise(0.9, 0.9);
-// 		}
-// 		else
-// 		{
-// 			Rotate_counter_clockwise(0.9, 0.9);
-// 		}
-		//Rotate_LIDAR();
-// 		PORTA |= (mode_changed << PORTA7);
-// 		if(mode_changed)
-// 		{
-// 			mode_changed = false;
-// 			_delay_ms(1000);
-// 			mode = 's';
-// 			Data_transmission('d');
-// 		}
-// 		
-// 		
+	{ 		
 // 		if(UART_queue_length() >= 2)
 // 		{
 // 			uint8_t data1;
@@ -69,18 +49,44 @@ int main(void)
 // 			UART_queue_get(&data2);			
 // 		}
 		//Test_SPI_queue();
-		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		
-		if(UART_queue_peek() == 'A')
+// 		if(UART_queue_peek(UART_queue_out) == 'A')
+// 		{
+// 			UART_queue_remove(); // remove current element.
+// 			autonomous = !autonomous;
+// 		}
+// 		else
+// 		{
+// 			UART_queue_get(&mode); // Store in mode.
+// 		} 
+// 		if(Left_side_detectable())
+// 		{
+// 			PORTA |= (1 << 4);
+// 		}
+// 		else
+// 		{
+// 			PORTA &=
+// 		}
+
+		while(UART_queue_length > 1) // Dequeue_UART_queue not working, but this is....
 		{
-			UART_queue_remove(); // remove current element.
-			autonomous = !autonomous;
+			uint8_t first_byte = UART_queue_peek(UART_queue_out);
+
+			if(first_byte == 'A')
+			{
+				autonomous = !autonomous;
+				UART_queue_remove();
+				UART_queue_remove();
+			}
+			else
+			{
+				UART_queue_get(&mode);
+				UART_queue_remove();
+			}
 		}
-		else
-		{
-			UART_queue_get(&mode); // Store in mode.
-		} 
-		
+		//Dequeue_UART_queue();
+		Dequeue_SPI_queue(); // Load Sensor values from queue.
+				
 		if(autonomous) // Autonomous mode
 		{
 			if(mode == 'f')
