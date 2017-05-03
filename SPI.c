@@ -233,6 +233,7 @@ void Dequeue_SPI_queue()
 	{
 		PORTA |= (1 << 4);
 		uint8_t IR_value;
+		uint8_t LIDAR_value;
 		SPI_queue_remove();
 		SPI_queue_remove();
 		SPI_queue_get(&IR_value);
@@ -244,8 +245,12 @@ void Dequeue_SPI_queue()
 		SPI_queue_remove();
 		SPI_queue_remove();
 		SPI_queue_remove();
-		SPI_queue_remove();
-		SPI_queue_remove();
+		SPI_queue_get(&LIDAR_value);
+		front_distance = LIDAR_value;
+		SPI_queue_get(&LIDAR_value);
+		front_distance = (front_distance << 8) | LIDAR_value;
+// 		SPI_queue_remove();
+// 		SPI_queue_remove();
 		
 		dequeue = false;
 		PORTA &= ~(1 << 4);

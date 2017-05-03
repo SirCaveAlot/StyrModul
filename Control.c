@@ -129,7 +129,7 @@ void Hallway_control(bool forward)
 void Hallway_control_both()
 {
 	float steer_signal_1 = Steer_signal1();
-	float set_speed = 0.5; //Set_speed();, 
+	float set_speed = Set_speed(); //0.5
 	
 	if (error_current1 >= 0)
 	{
@@ -162,32 +162,64 @@ void Hallway_control_both()
 void Hallway_control_left()
 {
 	float steer_signal_3 = Steer_signal3();
-	float set_speed = 0.5; //Set_speed();
+	float set_speed = Set_speed(); //0.5
 	if (error_current3 >= 0)
 	{
-		OCR1A = set_speed*ICR1 - steer_signal_3;
-		OCR1B = set_speed*ICR1;
+		if(set_speed*ICR1 - steer_signal_3 < 0)
+		{
+			OCR1A = 0; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
+		else
+		{
+			OCR1A = set_speed*ICR1 - steer_signal_3; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
 	}
 	else
 	{
-		OCR1A = set_speed*ICR1; // Steersignal < 0
-		OCR1B = set_speed*ICR1 + steer_signal_3;
+		if(set_speed*ICR1 - steer_signal_3 < 0)
+		{
+			OCR1A = set_speed*ICR1; // Right
+			OCR1B = 0; // Left
+		}
+		else
+		{
+			OCR1A = set_speed*ICR1; // Steersignal < 0  // Right
+			OCR1B = set_speed*ICR1 + steer_signal_3; // Left
+		}
 	}
 }
 
 void Hallway_control_right()
 {
 	float steer_signal_2 = Steer_signal2();
-	float set_speed = 0.5; //Set_speed();
+	float set_speed = Set_speed();    //0.5
 	if (error_current1 >= 0)
 	{
-		OCR1A = set_speed*ICR1 - steer_signal_2;
-		OCR1B = set_speed*ICR1;
+		if(set_speed*ICR1 - steer_signal_2 < 0)
+		{
+			OCR1A = 0; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
+		else
+		{
+			OCR1A = set_speed*ICR1 - steer_signal_2; // Right
+			OCR1B = set_speed*ICR1; // Left
+		}
 	}
 	else
 	{
-		OCR1A = set_speed*ICR1; // Steersignal < 0
-		OCR1B = set_speed*ICR1 + steer_signal_2;
+		if(set_speed*ICR1 - steer_signal_2 < 0)
+		{
+			OCR1A = set_speed*ICR1; // Right
+			OCR1B = 0; // Left
+		}
+		else
+		{
+			OCR1A = set_speed*ICR1; // Steersignal < 0 // Right
+			OCR1B = set_speed*ICR1 + steer_signal_2; // Left
+		}
 	}
 }
 //----------------------------Rotation control------------------------------------
@@ -259,15 +291,20 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 	{
 		return velocity;
 	}
-///////////////////////////////////////////////////////////////////////
-// 	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
-// 	{
-// 		return 0;
-// 	}
-///////////////////////////////////////////////////////////////////////
+	
+	else if (error_current_speed <= 0) // IF TO CLOSE
+	{
+		return 0;
+	}
+	
+	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
+	{
+		return 0;
+	}
+	
 	else
 	{
-		return 1;
+		return 0.5;
 	}
 }
 

@@ -18,7 +18,7 @@ int left_distance;
 int right_distance;
 volatile uint8_t angle;
 volatile uint8_t gyro_rotation_speed;
-volatile uint16_t front_distance;
+uint16_t front_distance;
 volatile uint8_t velocity;
 volatile uint8_t travelled_distance;
 volatile uint8_t LIDAR_angle;
