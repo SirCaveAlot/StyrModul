@@ -3,7 +3,7 @@
 //  *
 //  * Created: 3/31/2017 2:22:01 PM
 //  *  Author: gusst967
-//  */ 
+//  */
 
 #define F_CPU 14745600UL
 
@@ -36,7 +36,7 @@ uint8_t transmission_counter = 0;
 
 /* Queue structure */
 #define UART_QUEUE_ELEMENTS 25
-#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is QUEUE_ELEMENTS
+#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is UART_QUEUE_ELEMENTS
 volatile uint8_t UART_queue[UART_QUEUE_SIZE];
 uint8_t UART_queue_in, UART_queue_out;
 uint8_t UART_queue_length;
@@ -47,7 +47,7 @@ ISR(USART0_RX_vect)
 {
 	//PORTA |= (1 << PORTA5);
  	volatile uint8_t data = UDR0;
-	 
+
 	UART_queue_put(data);
 // 	if(receiving_counter == 0)
 // 	{
@@ -58,14 +58,14 @@ ISR(USART0_RX_vect)
 // 		}
 // 		else
 // 		{
-// 			mode = data; // Store the first byte of transmission in UDR0 in mode.	
+// 			mode = data; // Store the first byte of transmission in UDR0 in mode.
 // 		}
 // 		receiving_counter = receiving_counter + 1;
 // 	}
 // 	else if(data == 0x00)
 // 	{
 // 		receiving_counter = 0;
-// 		//mode_changed = true;		
+// 		//mode_changed = true;
 // 	}
 // 	else if(receiving_counter == 1)
 // 	{
@@ -91,7 +91,7 @@ void USART_Init(unsigned int baud)
 	UBRR0L = 7;
 	UCSR0B = (1<<RXEN0)|(1<<TXEN0); // Receiver and transmitter enabled.
 	/* Set frame format: 8data, 1stop bit */
-	UCSR0C = 0b00000110; // frame 
+	UCSR0C = 0b00000110; // frame
 	UCSR0B |= (1<<RXCIE0); // Enables receive interrupt
 	UART_queue_init();
 }
@@ -135,7 +135,7 @@ void UART_queue_get(uint8_t *old)
         return; /* Queue Empty - nothing to get*/
     }
 
-    *old = UART_queue[UART_queue_out];	
+    *old = UART_queue[UART_queue_out];
 	UART_queue[UART_queue_out] = 0;
 	UART_queue_out = (UART_queue_out + 1) % UART_QUEUE_SIZE;
 	UART_queue_length--;
@@ -169,7 +169,7 @@ void UART_queue_remove()
 // 	}
 // 	else if(UART_queue_out > UART_queue_in)
 // 	{
-// 		return QUEUE_SIZE - (UART_queue_out - UART_queue_in); 
+// 		return QUEUE_SIZE - (UART_queue_out - UART_queue_in);
 // 	}
 // 	else
 // 	{
@@ -180,7 +180,7 @@ void UART_queue_remove()
 void Dequeue_UART_queue()
 {
 	//uint8_t second_byte = UART_queue_peek(UART_queue_out + 1);
-	
+
 	while(UART_queue_length != 0)
 	{
 		uint8_t first_byte = UART_queue_peek(UART_queue_out);
@@ -198,17 +198,3 @@ void Dequeue_UART_queue()
 		}
 	}
 }
-
-// void Start_dequeuing();
-// {
-// 
-// 	
-// 	if(second_byte == 0x00)
-// 	{
-// 		dequeue = true;
-// 	}
-// 	else
-// 	{
-// 		dequeue = false;
-// 	}
-// }

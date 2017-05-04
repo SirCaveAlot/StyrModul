@@ -3,9 +3,9 @@
  *
  * Created: 4/3/2017 2:10:56 PM
  *  Author: gusst967
- */ 
+ */
 
-// 
+//
 // void SPI_slave_init()
 // {
 // 	DDRB |= (1 << 6); // MISO as output, slave configuration.
@@ -13,7 +13,7 @@
 // 	SPSR |= (0 << SPI2X);
 // 	SPDR = 0x00; // Clear SPI interrupt flag by reading SPSR and SPDR.
 // }
-// 
+//
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -39,9 +39,9 @@ volatile uint8_t SPI_receiving_counter = 0;
 ISR(SPI_STC_vect)
 {
 	volatile uint8_t data = SPDR;
-	
+
 	SPI_queue_put(data);
-	
+
 // 	if(data == 0x00 && SPI_receiving_counter == 0)
 // 	{
 // 		SPI_receiving_counter = 1;
@@ -97,8 +97,8 @@ ISR(SPI_STC_vect)
 // 	{
 // 		SPI_receiving_counter = 0;
 // 	}
-	
-// 	
+
+//
 // 	if(SPI_receiving_counter == 0)
 // 	{
 // 		IR_conversion_right(data);0
@@ -122,8 +122,8 @@ ISR(SPI_STC_vect)
 // 		left_distance = SPDR;
 // 		SPDR = 0x00;
 // 	}
-	
-	//left_right = !left_right; 	
+
+	//left_right = !left_right;
 }
 
 
@@ -141,7 +141,7 @@ void Spi_init()
  * These are FIFO queues which discard the new data when full.
  *
  * Queue is empty when in == out.
- * If in != out, then 
+ * If in != out, then
  *  - items are placed into in before incrementing in
  *  - items are removed from out before incrementing out
  * Queue is full when in == (out-1 + QUEUE_SIZE) % QUEUE_SIZE;
@@ -166,7 +166,7 @@ void SPI_queue_put(uint8_t new)
 	}
 
 	SPI_queue[SPI_queue_in] = new;
-	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;	
+	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;
 	SPI_queue_length++;
 }
 
@@ -177,9 +177,9 @@ void SPI_queue_get(uint8_t *old)
 		return; /* Queue Empty - nothing to get*/
 	}
 
-	*old = SPI_queue[SPI_queue_out];	
+	*old = SPI_queue[SPI_queue_out];
 	SPI_queue[SPI_queue_out] = 0;
-	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;	
+	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
 	SPI_queue_length--;
 }
 
@@ -220,7 +220,7 @@ void SPI_queue_remove()
 // }
 
 void Dequeue_SPI_queue()
-{		
+{
 	if(SPI_queue_length < 11)
 	{
 		dequeue = false;
@@ -232,6 +232,7 @@ void Dequeue_SPI_queue()
 	{
 		//PORTA |= (1 << 4);
 		uint8_t IR_value;
+		uint8_t LIDAR_value;
 		SPI_queue_remove();
 		SPI_queue_remove();
 		SPI_queue_get(&IR_value); // IR right
@@ -259,7 +260,7 @@ void Start_dequeuing()
 {
 	uint8_t first_value = SPI_queue_peek(SPI_queue_out);
 	uint8_t second_value = SPI_queue_peek(SPI_queue_out + 1);
-	
+
 	if(first_value == 0xFF && second_value == 0xFF)
 	{
 		dequeue = true;

@@ -3,11 +3,12 @@
  *
  * Created: 4/3/2017 1:51:03 PM
  *  Author: gusst967
- */ 
+ */
 
 #define F_CPU 14745600UL
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdbool.h>
 #include <avr/interrupt.h>
@@ -23,7 +24,7 @@
 #define UBBR clkspd/16/BAUD-1
 
 int main(void)
-{	
+{
 	Timer1_init();
 	Timer2_init();
 	USART_Init(UBBR);
@@ -39,17 +40,17 @@ int main(void)
 // 	UART_queue_put(0x00);
 	_delay_ms(1000);
 	sei();
-	
+
 	while(1)
-	{ 		
+	{
 // 		if(UART_queue_length() >= 2)
 // 		{
 // 			uint8_t data1;
 // 			UART_queue_get(&data1);
 // 			uint8_t data2;
-// 			UART_queue_get(&data2);			
+// 			UART_queue_get(&data2);
 // 		}
-		
+
 // 		if(UART_queue_peek(UART_queue_out) == 'A')
 // 		{
 // 			UART_queue_remove(); // remove current element.
@@ -58,7 +59,7 @@ int main(void)
 // 		else
 // 		{
 // 			UART_queue_get(&mode); // Store in mode.
-// 		} 
+// 		}
 // 		if(Left_side_detectable())
 // 		{
 // 			PORTA |= (1 << 4);
@@ -85,9 +86,9 @@ int main(void)
 			}
 		}
 		//Dequeue_UART_queue();
-		//Test_SPI_queue();		
+		//Test_SPI_queue();
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
-				
+
 		if(autonomous) // Autonomous mode
 		{
 			if(mode == 'f')

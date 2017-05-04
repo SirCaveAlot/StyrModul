@@ -3,7 +3,7 @@
  *
  * Created: 4/20/2017 3:32:28 PM
  *  Author: gusst967
- */ 
+ */
 
 #define F_CPU 14745600UL
 
@@ -43,15 +43,15 @@ uint16_t LIDAR_array[2] = {0, 0};
 
 // ISR(TIM0_OVF_vect)
 // {
-// 	
+//
 // }
-// 
+//
 // void Timer0_init()
 // {
 // 	TCCR0A |= (1 << WGM00) | (1 << WGM01) | (1 << COM0A1); // fast PWM-mode, MAX = TOP
 // 	TCCR0B |= (1 << CS22) | (1 << CS21) | (1 << CS20); // clock select 8 prescaler for 128000 kHz
 // }
-  
+
 //-------------------------IR sensors------------------------------
 
 void IR_conversion(bool right, uint8_t IR_value)
@@ -64,7 +64,7 @@ void IR_conversion(bool right, uint8_t IR_value)
 	else
 	{
 		left_distance = distance;
-	}	
+	}
 }
 
 void Left_side_detectable()
@@ -127,15 +127,15 @@ void Distance_calculation(uint8_t data) //Calculates the distance
 
 void Distance_travelled() //Calculates the travelled distance
 {
-	travel_distance = wheel_sensor_counter * WHEEL_SLICE; 
+	travel_distance = wheel_sensor_counter * WHEEL_SLICE;
 }
 
 void Calculate_wheel_sensor_counter(uint8_t data) //Calculates the wheel sensor and standing still counter
-{	
+{
 	if(data == 0x01)
 	{
 		standing_still_counter = 0;
-		wheel_sensor_counter++; 
+		wheel_sensor_counter++;
 	}
 	else if(data == 0x00)
 	{

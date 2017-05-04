@@ -3,7 +3,7 @@
  *
  * Created: 4/19/2017 3:39:39 PM
  *  Author: gusst967
- */ 
+ */
 
 
 #define F_CPU 14745600UL
@@ -26,9 +26,11 @@ float error_prior3;
 float error_current1;
 float error_current2;
 float error_current3;
+
 uint8_t proportional_gain1 = 9;
 uint8_t proportional_gain2 = 6;
 uint8_t proportional_gain3 = 6;
+
 float derivative_gain1 = 0.7;
 float derivative_gain2 = 1.0;
 float derivative_gain3 = 1.0;
@@ -107,9 +109,9 @@ void Hallway_control(bool forward)
 {
 	Right_side_detectable();
 	Left_side_detectable();
-	
+
 	Direction(forward);
-	
+
 	if(right_side_detected)
 	{
 		PORTC |= (1 << 0);
@@ -118,7 +120,7 @@ void Hallway_control(bool forward)
 	{
 		PORTC &= ~(1 << 0);
 	}
-	
+
 	if(left_side_detected)
 	{
 		PORTC |= (1 << 1);
@@ -127,7 +129,7 @@ void Hallway_control(bool forward)
 	{
 		PORTC &= ~(1 << 1);
 	}
-	
+
 	if(right_side_detected && left_side_detected)
 	{
 		Hallway_control_both();
@@ -151,8 +153,8 @@ void Hallway_control(bool forward)
 void Hallway_control_both()
 {
 	float steer_signal_1 = Steer_signal1();
-	float set_speed = 0.5; //Set_speed();, 
-	
+	float set_speed = Set_speed(); //0.5
+
 	if (error_current1 >= 0)
 	{
 		if(set_speed*ICR1 - steer_signal_1 < 0)
@@ -184,7 +186,7 @@ void Hallway_control_both()
 void Hallway_control_left()
 {
 	float steer_signal_3 = Steer_signal3();
-	float set_speed = 0.5; //Set_speed();
+	float set_speed = Set_speed(); //0.5
 	if (error_current3 >= 0)
 	{
 		if(set_speed*ICR1 - steer_signal_3 < 0)
@@ -216,7 +218,7 @@ void Hallway_control_left()
 void Hallway_control_right()
 {
 	float steer_signal_2 = Steer_signal2();
-	float set_speed = 0.5; //Set_speed();
+	float set_speed = Set_speed();    //0.5
 	if (error_current1 >= 0)
 	{
 		if(set_speed*ICR1 - steer_signal_2 < 0)
@@ -298,12 +300,12 @@ void Hallway_control_right()
 // 			OCR1B = MAX_SPEED * ICR1;
 // 			PORTA = (1 << PORTA0) | (0 << PORTA1);
 // 		}
-// 		
+//
 // 	}
 // }
-// 
+//
 // //----------------------------Speed control------------------------------------
-// 
+//
 // float Set_speed() //sets speed given distance to obstacle ahead and then stops
 // {
 // 	error_prior_speed = error_current_speed;
@@ -326,71 +328,6 @@ void Hallway_control_right()
 // }
 
 
-void Speed_test()
-{
-	
-	
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(30);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(30);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(30);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(30);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(30);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-}
-
 //----------------------------LIDAR control------------------------------------
 
 
@@ -407,12 +344,12 @@ void Speed_test()
 // 	Timer1_init();
 // 	DDRD = 0xFF;
 // 	TCNT1 = ICR1 - 2;
-// 	
+//
 //     while(1)
 //     {
 // 		float steer_signal_1 = Steer_signal1();
 // 		float steer_signal_2 = Steer_signal2();
-// 		
+//
 // 		if (left_distance >= 0  && left_distance <= 40 && right_distance >= 0 && right_distance <= 40)
 // 		{
 // 			if (error_current1 >= 0)
@@ -443,7 +380,7 @@ void Speed_test()
 // 				OCR1B = 0.5*ICR1;
 // 			}
 // 		}
-// 		else 
+// 		else
 // 		{
 // 			//ROTERA 90 GRADER HÖGER
 // 		}
@@ -451,7 +388,7 @@ void Speed_test()
 // 		float steer_signal_1 = Steer_signal1();
 // 		float steer_signal_2 = Steer_signal2();
 // 		float set_speed = Set_speed();
-// 		
+//
 // 		if (left_distance >= 0  && left_distance <= 40 && right_distance >= 0 && right_distance <= 40)
 // 		{
 // 			if (error_current1 >= 0)
@@ -487,6 +424,6 @@ void Speed_test()
 // 			//ROTERA 90 GRADER HÖGER
 // 		}
 // 		>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// 		*/	
+// 		*/
 //     }
 // }
