@@ -21,6 +21,8 @@
 
 int left_distance;
 int right_distance;
+bool left_side_detected;
+bool right_side_detected;
 uint8_t angle;
 uint8_t gyro_rotation_speed;
 float front_distance;
@@ -54,7 +56,7 @@ uint16_t LIDAR_array[2] = {0, 0};
 
 void IR_conversion(bool right, uint8_t IR_value)
 {
-	int distance = 10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value)));
+	int distance = floor(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
 	if(right)
 	{
 		right_distance = distance;
@@ -65,27 +67,27 @@ void IR_conversion(bool right, uint8_t IR_value)
 	}	
 }
 
-bool Left_side_detectable()
+void Left_side_detectable()
 {
 	if(left_distance > 300)
 	{
-		return false;
+		left_side_detected = false;
 	}
 	else
 	{
-		return true;
+		left_side_detected = true;
 	}
 }
 
-bool Right_side_detectable()
+void Right_side_detectable()
 {
 	if(right_distance > 300)
 	{
-		return false;
+		right_side_detected = false;
 	}
 	else
 	{
-		return true;
+		right_side_detected = true;
 	}
 }
 

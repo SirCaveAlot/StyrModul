@@ -30,12 +30,13 @@ int main(void)
 	Spi_init();
 	DDRD = 0xFA;
 	DDRA = 0xFF;
-	DDRC |= 0b00000011;
 	Center_grip_arm();
-	UART_queue_put('A');
-	UART_queue_put(0x00);
-	UART_queue_put('f');
-	UART_queue_put(0x00);
+	autonomous = true;
+	mode = 'f';
+// 	UART_queue_put('A');
+// 	UART_queue_put(0x00);
+// 	UART_queue_put('f');
+// 	UART_queue_put(0x00);
 	_delay_ms(1000);
 	sei();
 	
@@ -48,7 +49,6 @@ int main(void)
 // 			uint8_t data2;
 // 			UART_queue_get(&data2);			
 // 		}
-		//Test_SPI_queue();
 		
 // 		if(UART_queue_peek(UART_queue_out) == 'A')
 // 		{
@@ -85,6 +85,7 @@ int main(void)
 			}
 		}
 		//Dequeue_UART_queue();
+		//Test_SPI_queue();		
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 				
 		if(autonomous) // Autonomous mode

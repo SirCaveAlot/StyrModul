@@ -220,15 +220,14 @@ void SPI_queue_remove()
 // }
 
 void Dequeue_SPI_queue()
-{	
-	Start_dequeuing();
-		
+{		
 	if(SPI_queue_length < 11)
 	{
 		dequeue = false;
 		return;
 	}
-	
+	cli();
+	Start_dequeuing();
 	if(dequeue)
 	{
 		//PORTA |= (1 << 4);
@@ -246,7 +245,6 @@ void Dequeue_SPI_queue()
 		SPI_queue_remove(); // Gyro
 		SPI_queue_remove(); // LIDAR high
 		SPI_queue_remove(); // LIDAR low
-		
 		dequeue = false;
 		//PORTA &= ~(1 << 4);
 	}
@@ -254,6 +252,7 @@ void Dequeue_SPI_queue()
 	{
 		SPI_queue_remove();
 	}
+	sei();
 }
 
 void Start_dequeuing()
@@ -276,7 +275,7 @@ void Test_SPI_queue()
  	SPI_queue_put(0xFF);
  	SPI_queue_put(0xFF);
 	SPI_queue_put(100);
-	SPI_queue_put(30);
+	SPI_queue_put(80);
 	SPI_queue_put(100);
 	SPI_queue_put(40);
 	SPI_queue_put(100);

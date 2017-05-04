@@ -12,6 +12,8 @@
 
 extern int left_distance;
 extern int right_distance;
+extern bool right_side_detected;
+extern bool left_side_detected;
 extern uint8_t angle;
 extern uint8_t gyro_rotation_speed;
 extern float front_distance;
@@ -26,9 +28,9 @@ extern bool autonomous;
 
 void IR_conversion(bool, uint8_t);
 
-bool Left_side_detectable();
+void Left_side_detectable();
 
-bool Right_side_detectable();
+void Right_side_detectable();
 
 void Set_front_distance(uint16_t);
 

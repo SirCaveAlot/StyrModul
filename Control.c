@@ -105,8 +105,8 @@ void Direction(bool forward)
 
 void Hallway_control(bool forward)
 {
-	bool right_side_detected = Right_side_detectable();
-	bool left_side_detected = Left_side_detectable();
+	Right_side_detectable();
+	Left_side_detectable();
 	
 	Direction(forward);
 	
