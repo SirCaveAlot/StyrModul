@@ -3,7 +3,7 @@
  *
  * Created: 4/19/2017 3:39:39 PM
  *  Author: gusst967
- */
+ */ 
 
 
 #define F_CPU 14745600UL
@@ -18,36 +18,34 @@
 #include "SPI.h"
 #include "UART.h"
 
-#define MAX_SPEED 1
+#define MAX_SPEED 0.5
 
-float error_prior1;
-float error_prior2;
-float error_prior3;
-float error_current1;
-float error_current2;
-float error_current3;
-
-uint8_t proportional_gain1 = 9;
-uint8_t proportional_gain2 = 6;
-uint8_t proportional_gain3 = 6;
-
-float derivative_gain1 = 0.7;
-float derivative_gain2 = 1.0;
-float derivative_gain3 = 1.0;
-float iteration_time = 0.02; // 20 ms
+float error_prior_both;
+float error_prior_right;
+float error_prior_left;
+float error_current_both;
+float error_current_right;
+float error_current_left;
+uint8_t proportional_gain_both = 10;
+uint8_t proportional_gain_right = 20;
+uint8_t proportional_gain_left = 20;
+float derivative_gain_both = 1.8;
+float derivative_gain_right = 3.6;
+float derivative_gain_left = 3.6;
 //
 float error_prior_speed;
 float error_current_speed;
-uint8_t proportional_gain_speed = 10;
+uint8_t proportional_gain_speed = 5;
 float derivative_gain_speed = 0.5;
+
 //
 //
-float rotation_speed;
-float rotation_angle = 0;
-float error_prior_rot;
-float error_current_rot;
-uint8_t proportional_gain_rot = 10;
-float derivative_gain_rot = 0.5;
+float error_prior_rotation;
+float error_current_rotation;
+uint8_t proportional_gain_rotation = 10;
+float derivative_gain_rotation = 0.5;
+
+bool update_control;
 //
 
 
@@ -69,28 +67,28 @@ float derivative_gain_rot = 0.5;
 //----------------------------Hallway control------------------------------------
 
 
-float Steer_signal1() //steersignal when both sides detectable
+float Steer_signal_both() //steersignal when both sides detectable
 {
-	error_prior1 = error_current1;
-	error_current1 = right_distance - left_distance;
-	float u1 = proportional_gain1*error_current1 + derivative_gain1*(error_current1 - error_prior1)*(1/iteration_time);
-	return u1;
+	error_prior_both = error_current_both;
+	error_current_both = right_distance - left_distance;
+	float steer_signal_both = proportional_gain_both*error_current_both + derivative_gain_both*(error_current_both - error_prior_both)*(1/iteration_time);
+	return steer_signal_both;
 }
 
-float Steer_signal2() //steersignal when right side detectable
+float Steer_signal_right() //steersignal when right side detectable
 {
-	error_prior2 = error_current2;
-	error_current2 = right_distance - 100; // Control using mm
-	float u2 = proportional_gain2*error_current2 + derivative_gain2*(error_current2 - error_prior2)*(1/iteration_time);
-	return u2;
+	error_prior_right = error_current_right;
+	error_current_right = right_distance - 100; // Control using mm
+	float steer_signal_right = proportional_gain_right*error_current_right + derivative_gain_right*(error_current_right - error_prior_right)*(1/iteration_time);
+	return steer_signal_right;
 }
 
-float Steer_signal3() //steersignal when left side detectable
+float Steer_signal_left() //steersignal when left side detectable
 {
-	error_prior3 = error_current3;
-	error_current3 = 100 - left_distance; // Control using mm
-	float u3 = proportional_gain3*error_current3 + derivative_gain3*(error_current3 - error_prior3)*(1/iteration_time);
-	return u3;
+	error_prior_left = error_current_left;
+	error_current_left = left_distance - 100; // Control using mm
+	float steer_signal_left = proportional_gain_left*error_current_left + derivative_gain_left*(error_current_left - error_prior_left)*(1/iteration_time);
+	return steer_signal_left;
 }
 
 void Direction(bool forward)
@@ -107,29 +105,16 @@ void Direction(bool forward)
 
 void Hallway_control(bool forward)
 {
+	if(!update_control)
+	{
+		return;
+	}
+	
 	Right_side_detectable();
 	Left_side_detectable();
-
+	update_control = false;
 	Direction(forward);
-
-	if(right_side_detected)
-	{
-		PORTC |= (1 << 0);
-	}
-	else
-	{
-		PORTC &= ~(1 << 0);
-	}
-
-	if(left_side_detected)
-	{
-		PORTC |= (1 << 1);
-	}
-	else
-	{
-		PORTC &= ~(1 << 1);
-	}
-
+	
 	if(right_side_detected && left_side_detected)
 	{
 		Hallway_control_both();
@@ -144,33 +129,31 @@ void Hallway_control(bool forward)
 	}
 	else
 	{
-		OCR1A = 0;
-		OCR1B = 0;
-		//Drive_forward(0, 0);
+		Drive_forward(0, 0);
 	}
 }
 
 void Hallway_control_both()
 {
-	float steer_signal_1 = Steer_signal1();
-	float set_speed = Set_speed(); //0.5
-
-	if (error_current1 >= 0)
+	float steer_signal_both = Steer_signal_both();
+	float set_speed = Set_speed(); 
+	
+	if (error_current_both >= 0)
 	{
-		if(set_speed*ICR1 - steer_signal_1 < 0)
+		if(set_speed*ICR1 - steer_signal_both < 0)
 		{
 			OCR1A = 0; // Right
 			OCR1B = set_speed*ICR1; // Left
 		}
 		else
 		{
-			OCR1A = set_speed*ICR1 - steer_signal_1; // Right
+			OCR1A = set_speed*ICR1 - steer_signal_both; // Right
 			OCR1B = set_speed*ICR1; // Left
 		}
 	}
 	else
 	{
-		if(set_speed * ICR1 + steer_signal_1 < 0)
+		if(set_speed * ICR1 + steer_signal_both < 0)
 		{
 			OCR1A = set_speed * ICR1; // Right
 			OCR1B = 0; // Left
@@ -178,63 +161,31 @@ void Hallway_control_both()
 		else
 		{
 			OCR1A = set_speed * ICR1; // Steersignal < 0 Right
-			OCR1B = set_speed * ICR1 + steer_signal_1; //Left
-		}
-	}
-}
-
-void Hallway_control_left()
-{
-	float steer_signal_3 = Steer_signal3();
-	float set_speed = Set_speed(); //0.5
-	if (error_current3 >= 0)
-	{
-		if(set_speed*ICR1 - steer_signal_3 < 0)
-		{
-			OCR1A = 0; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
-		else
-		{
-			OCR1A = set_speed*ICR1 - steer_signal_3; // Right
-			OCR1B = set_speed*ICR1; // Left
-		}
-	}
-	else
-	{
-		if(set_speed*ICR1 - steer_signal_3 < 0)
-		{
-			OCR1A = set_speed*ICR1; // Right
-			OCR1B = 0; // Left
-		}
-		else
-		{
-			OCR1A = set_speed*ICR1; // Steersignal < 0  // Right
-			OCR1B = set_speed*ICR1 + steer_signal_3; // Left
+			OCR1B = set_speed * ICR1 + steer_signal_both; //Left
 		}
 	}
 }
 
 void Hallway_control_right()
 {
-	float steer_signal_2 = Steer_signal2();
-	float set_speed = Set_speed();    //0.5
-	if (error_current1 >= 0)
+	float steer_signal_right = Steer_signal_right();
+	float set_speed = Set_speed();
+	if (error_current_right >= 0)
 	{
-		if(set_speed*ICR1 - steer_signal_2 < 0)
+		if(set_speed*ICR1 - steer_signal_right < 0)
 		{
 			OCR1A = 0; // Right
 			OCR1B = set_speed*ICR1; // Left
 		}
 		else
 		{
-			OCR1A = set_speed*ICR1 - steer_signal_2; // Right
+			OCR1A = set_speed*ICR1 - steer_signal_right; // Right
 			OCR1B = set_speed*ICR1; // Left
 		}
 	}
 	else
 	{
-		if(set_speed*ICR1 - steer_signal_2 < 0)
+		if(set_speed*ICR1 - steer_signal_right < 0)
 		{
 			OCR1A = set_speed*ICR1; // Right
 			OCR1B = 0; // Left
@@ -242,50 +193,128 @@ void Hallway_control_right()
 		else
 		{
 			OCR1A = set_speed*ICR1; // Steersignal < 0 // Right
-			OCR1B = set_speed*ICR1 + steer_signal_2; // Left
+			OCR1B = set_speed*ICR1 + steer_signal_right; // Left
+		}
+	}
+}
+
+void Hallway_control_left()
+{
+	float steer_signal_left = Steer_signal_left();
+	float set_speed = Set_speed();
+	if (error_current_left >= 0)
+	{
+		if(set_speed*ICR1 - steer_signal_left < 0)
+		{
+			OCR1B = 0; // Left
+			OCR1A = set_speed*ICR1; // Right
+		}
+		else
+		{
+			OCR1B = set_speed*ICR1 - steer_signal_left; // Left
+			OCR1A = set_speed*ICR1; // Right
+		}
+	}
+	else
+	{
+		if(set_speed*ICR1 - steer_signal_left < 0)
+		{
+			OCR1B = set_speed*ICR1; // Left
+			OCR1A = 0; // Right
+		}
+		else
+		{
+			OCR1B = set_speed*ICR1; // Steersignal < 0  // Left
+			OCR1A = set_speed*ICR1 + steer_signal_left; // Right
 		}
 	}
 }
 //----------------------------Rotation control------------------------------------
 
-// void Rotate(uint16_t angle, bool right) //rotates robot
-// {
-// 	error_prior_rot = error_current_rot;
-// 	rotation_angle = rotation_angle + (rotation_speed - 153) * iteration_time;
-// 	error_prior_rot = angle - rotation_angle;
-// 	float u_rot = proportional_gain_rot*error_current_rot + derivative_gain_rot*(error_current_rot - error_prior_rot)*(1/iteration_time);
-// 	if (u_rot < MAX_SPEED)
+float Steer_signal_rotation()
+{
+	Angle_calculation();
+	error_prior_rotation = error_current_rotation;
+	error_current_rotation = angle_to_rotate - angle; // Control using mm
+	float steer_signal = proportional_gain_rotation*error_current_rotation + derivative_gain_rotation*(error_current_rotation - error_prior_rotation)*(1/iteration_time);
+	return steer_signal;
+}
+
+void Rotation_control(bool right) //rotates robot
+{
+	if(!update_control)
+	{
+		return;
+	}
+	
+	Angle_calculation();
+	int16_t delta_angle = angle_to_rotate - angle; 
+	
+	if(right)
+	{
+		PORTA = (0 << PORTA0) | (1 << PORTA1);
+		
+		if(delta_angle < 300)
+		{
+			OCR1A = 0;
+			OCR1B = 0;
+		}
+		else
+		{
+			OCR1A = MAX_SPEED * ICR1;
+			OCR1B = MAX_SPEED * ICR1;
+		}
+	}
+	else
+	{
+		PORTA = (1 << PORTA0) | (0 << PORTA1);
+		
+		if(delta_angle < 300)
+		{
+			OCR1A = 0;
+			OCR1B = 0;
+		}
+		else
+		{
+			OCR1A = MAX_SPEED * ICR1;
+			OCR1B = MAX_SPEED * ICR1;
+		}
+	}
+	
+	
+	
+// 	float rotation_speed = Steer_signal_rotation();
+// 	
+// 	if (rotation_speed < 0.01) //IF SMALL STEER SIGNAL GIVES PROBLEMS
 // 	{
 // 		if(right)
 // 		{
-// 			OCR1A = u_rot*ICR1;
-// 			OCR1B = u_rot*ICR1;
+// 			OCR1A = 0;
+// 			OCR1B = 0;
 // 			PORTA = (0 << PORTA0) | (1 << PORTA1);
 // 		}
 // 		else
 // 		{
-// 			OCR1A = u_rot*ICR1;
-// 			OCR1B = u_rot*ICR1;
+// 			OCR1A = 0;
+// 			OCR1B = 0;
 // 			PORTA = (1 << PORTA0) | (0 << PORTA1);
 // 		}
 // 	}
-// /////////////////////////////////////////////////////////////////////
-// // 	else if (u_rot < 0.01) //IF SMALL STEER SIGNAL GIVES PROBLEMS
-// // 	{
-// // 		if (direction == 'H')
-// // 		 		{
-// // 		 			OCR1A = 0;
-// // 		 			OCR1B = 0;
-// // 		 			PORTA = (1 << PORTA0) | (0 << PORTA1);
-// // 		 		}
-// // 		 		else
-// // 		 		{
-// // 		 			OCR1A = 0;
-// // 		 			OCR1B = 0;
-// // 		 			PORTA = (0 << PORTA0) | (1 << PORTA1);
-// // 		 		}
-// // 	}
-// //////////////////////////////////////////////////////////////////////
+// 	else if (rotation_speed < MAX_SPEED)
+// 	{
+// 		if(right)
+// 		{
+// 			OCR1A = rotation_speed*ICR1;
+// 			OCR1B = rotation_speed*ICR1;
+// 			PORTA = (0 << PORTA0) | (1 << PORTA1);
+// 		}
+// 		else
+// 		{
+// 			OCR1A = rotation_speed*ICR1;
+// 			OCR1B = rotation_speed*ICR1;
+// 			PORTA = (1 << PORTA0) | (0 << PORTA1);
+// 		}
+// 	}
 // 	else
 // 	{
 // 		if (right)
@@ -299,131 +328,33 @@ void Hallway_control_right()
 // 			OCR1A = MAX_SPEED * ICR1;
 // 			OCR1B = MAX_SPEED * ICR1;
 // 			PORTA = (1 << PORTA0) | (0 << PORTA1);
-// 		}
-//
+// 		}	
 // 	}
-// }
-//
-// //----------------------------Speed control------------------------------------
-//
-// float Set_speed() //sets speed given distance to obstacle ahead and then stops
-// {
-// 	error_prior_speed = error_current_speed;
-// 	error_current_speed = front_distance - 25; //stops when LIDAR is 25 cm from obstacle ahead
-// 	float velocity = proportional_gain_speed*error_current_speed + derivative_gain_speed*(error_current_speed - error_prior_speed)*(1/iteration_time);
-// 	if (velocity < MAX_SPEED)
-// 	{
-// 		return velocity;
-// 	}
-// ///////////////////////////////////////////////////////////////////////
-// // 	else if (velocity < 0.01) // IF SMALL STEER SIGNAL GIVES PROBLEMS
-// // 	{
-// // 		return 0;
-// // 	}
-// ///////////////////////////////////////////////////////////////////////
-// 	else
-// 	{
-// 		return MAX_SPEED;
-// 	}
-// }
+}
 
+//----------------------------Speed control------------------------------------
+
+float Steer_signal_speed() //steersignal when right side detectable
+{
+	error_prior_speed = error_current_speed;
+	error_current_speed = distance_until_stop - travel_distance; // Control using mm
+	float steer_signal = proportional_gain_speed*error_current_speed + derivative_gain_speed*(error_current_speed - error_prior_speed)*(1/iteration_time);
+	return steer_signal;
+}
+
+float Set_speed() //sets speed given distance to obstacle ahead and then stops
+{
+	Distance_travelled();
+	int16_t delta_distance = distance_until_stop - travel_distance;
+	if(delta_distance <= stop_distance)
+	{
+		return 0;
+	}
+	else
+	{
+		return MAX_SPEED;
+	}
+}
 
 //----------------------------LIDAR control------------------------------------
 
-
-
-
-
-
-
-
-
-
-// int main(void)
-// {
-// 	Timer1_init();
-// 	DDRD = 0xFF;
-// 	TCNT1 = ICR1 - 2;
-//
-//     while(1)
-//     {
-// 		float steer_signal_1 = Steer_signal1();
-// 		float steer_signal_2 = Steer_signal2();
-//
-// 		if (left_distance >= 0  && left_distance <= 40 && right_distance >= 0 && right_distance <= 40)
-// 		{
-// 			if (error_current1 >= 0)
-// 			{
-// 				OCR1A = 0.5*ICR1;
-// 				OCR1B = 0.5*ICR1 - steer_signal_1;
-// 			}
-// 			else
-// 			{
-// 				OCR1A = 0.5*ICR1 + steer_signal_1;
-// 				OCR1B = 0.5*ICR1;
-// 			}
-// 		}
-// 		else if (left_distance > 40 && right_distance > 40)
-// 		{
-// 			//ROTERA 90 GRADER HÖGER
-// 		}
-// 		else if (right_distance > 0 && right_distance < 40 && left_distance > 40)
-// 		{
-// 			if (error_current1 >= 0)
-// 			{
-// 				OCR1A = 0.5*ICR1;
-// 				OCR1B = 0.5*ICR1 - steer_signal_2;
-// 			}
-// 			else
-// 			{
-// 				OCR1A = 0.5*ICR1 + steer_signal_2;
-// 				OCR1B = 0.5*ICR1;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			//ROTERA 90 GRADER HÖGER
-// 		}
-// 		/* >>>>>>>>>>>>>>>>>>>>>>>THIS SECTION ALSO REGULATES THE set_speed<<<<<<<<<<<<<<<<<<<<<<<<<<
-// 		float steer_signal_1 = Steer_signal1();
-// 		float steer_signal_2 = Steer_signal2();
-// 		float set_speed = Set_speed();
-//
-// 		if (left_distance >= 0  && left_distance <= 40 && right_distance >= 0 && right_distance <= 40)
-// 		{
-// 			if (error_current1 >= 0)
-// 			{
-// 				OCR1A = set_speed*ICR1;
-// 				OCR1B = set_speed*ICR1 - steer_signal_1;
-// 			}
-// 			else
-// 			{
-// 				OCR1A = set_speed*ICR1 + steer_signal_1;
-// 				OCR1B = set_speed*ICR1;
-// 			}
-// 		}
-// 		else if (left_distance > 40 && right_distance > 40)
-// 		{
-// 			//ROTERA 90 GRADER HÖGER
-// 		}
-// 		else if (right_distance > 0 && right_distance < 40 && left_distance > 40)
-// 		{
-// 			if (error_current1 >= 0)
-// 			{
-// 				OCR1A = set_speed*ICR1;
-// 				OCR1B = set_speed*ICR1 - steer_signal_2;
-// 			}
-// 			else
-// 			{
-// 				OCR1A = set_speed*ICR1 + steer_signal_2;
-// 				OCR1B = set_speed*ICR1;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			//ROTERA 90 GRADER HÖGER
-// 		}
-// 		>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-// 		*/
-//     }
-// }

@@ -3,7 +3,7 @@
 //  *
 //  * Created: 3/31/2017 2:22:01 PM
 //  *  Author: gusst967
-//  */
+//  */ 
 
 #define F_CPU 14745600UL
 
@@ -16,6 +16,7 @@
 #include "PWM_SirCave.h"
 #include "UART.h"
 #include "Sensor_values.h"
+#include "Modes.h"
 
 
 //----------------Global variables-----------------------
@@ -36,7 +37,7 @@ uint8_t transmission_counter = 0;
 
 /* Queue structure */
 #define UART_QUEUE_ELEMENTS 25
-#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is UART_QUEUE_ELEMENTS
+#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is QUEUE_ELEMENTS
 volatile uint8_t UART_queue[UART_QUEUE_SIZE];
 uint8_t UART_queue_in, UART_queue_out;
 uint8_t UART_queue_length;
@@ -47,37 +48,7 @@ ISR(USART0_RX_vect)
 {
 	//PORTA |= (1 << PORTA5);
  	volatile uint8_t data = UDR0;
-
 	UART_queue_put(data);
-// 	if(receiving_counter == 0)
-// 	{
-// 		if(data == 'A')
-// 		{
-// 			autonomous = !autonomous;
-// 			mode = 's';
-// 		}
-// 		else
-// 		{
-// 			mode = data; // Store the first byte of transmission in UDR0 in mode.
-// 		}
-// 		receiving_counter = receiving_counter + 1;
-// 	}
-// 	else if(data == 0x00)
-// 	{
-// 		receiving_counter = 0;
-// 		//mode_changed = true;
-// 	}
-// 	else if(receiving_counter == 1)
-// 	{
-// 		data_buffer = data;
-// 		receiving_counter = receiving_counter + 1;
-// 	}
-// 	else if(receiving_counter == 2)
-// 	{
-// 		data_buffer = (data_buffer << 8);
-// 		data_buffer = data_buffer | data;
-// 		receiving_counter = receiving_counter + 1;
-// 	}
 	//PORTA &= ~(1 << PORTA5);
 }
 
@@ -91,7 +62,7 @@ void USART_Init(unsigned int baud)
 	UBRR0L = 7;
 	UCSR0B = (1<<RXEN0)|(1<<TXEN0); // Receiver and transmitter enabled.
 	/* Set frame format: 8data, 1stop bit */
-	UCSR0C = 0b00000110; // frame
+	UCSR0C = 0b00000110; // frame 
 	UCSR0B |= (1<<RXCIE0); // Enables receive interrupt
 	UART_queue_init();
 }
@@ -135,7 +106,7 @@ void UART_queue_get(uint8_t *old)
         return; /* Queue Empty - nothing to get*/
     }
 
-    *old = UART_queue[UART_queue_out];
+    *old = UART_queue[UART_queue_out];	
 	UART_queue[UART_queue_out] = 0;
 	UART_queue_out = (UART_queue_out + 1) % UART_QUEUE_SIZE;
 	UART_queue_length--;
@@ -157,44 +128,68 @@ void UART_queue_remove()
 	UART_queue_length--;
 }
 
-// uint8_t UART_queue_length()
-// {
-// 	if(UART_queue_in == ((UART_queue_out + QUEUE_ELEMENTS) % QUEUE_SIZE))
-// 	{
-// 		return QUEUE_ELEMENTS;
-// 	}
-// 	else if(UART_queue_in == UART_queue_out)
-// 	{
-// 		return 0;
-// 	}
-// 	else if(UART_queue_out > UART_queue_in)
-// 	{
-// 		return QUEUE_SIZE - (UART_queue_out - UART_queue_in);
-// 	}
-// 	else
-// 	{
-// 		return UART_queue_in - UART_queue_out;
-// 	}
-// }
-
 void Dequeue_UART_queue()
 {
-	//uint8_t second_byte = UART_queue_peek(UART_queue_out + 1);
-
-	while(UART_queue_length != 0)
+	if(UART_queue_length < 3)
 	{
-		uint8_t first_byte = UART_queue_peek(UART_queue_out);
-
-		if(first_byte == 'A')
+		return;
+	}
+	
+	uint8_t first_byte;
+	UART_queue_get(&first_byte);
+	
+	if(first_byte == 0x00)
+	{
+		uint8_t second_byte = 0;
+		uint8_t data = 0;
+		UART_queue_get(&second_byte);
+		UART_queue_get(&data);
+		
+		if(second_byte == 'A')
 		{
 			autonomous = !autonomous;
-			UART_queue_remove();
-			UART_queue_remove();
+			return;
 		}
-		else
+		else if((second_byte == 'f') | (second_byte == 'b'))
 		{
-			UART_queue_get(&mode);
-			UART_queue_remove();
+			Set_distance_until_stop(data);		
 		}
+		else if((second_byte == 'l') | (second_byte == 'r'))
+		{
+			Set_angle_to_rotate(data);
+		}
+		
+		mode = second_byte; // more modes, create switch-case.
 	}
+}
+
+void Test_UART_queue()
+{
+	UART_queue_put(0x00);
+	UART_queue_put('A');
+	UART_queue_put(0x00);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('f');
+	UART_queue_put(3);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('r');
+	UART_queue_put(90);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('l');
+	UART_queue_put(90);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('L');
+	UART_queue_put(0x00);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('b');
+	UART_queue_put(7);
+	
+	UART_queue_put(0x00);
+	UART_queue_put('A');
+	UART_queue_put(0x00);
 }

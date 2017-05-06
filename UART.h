@@ -3,7 +3,7 @@
  *
  * Created: 4/3/2017 1:54:29 PM
  *  Author: gusst967
- */
+ */ 
 
 
 #ifndef UART_H_
@@ -25,10 +25,10 @@ void UART_queue_remove();
 
 void Dequeue_UART_queue();
 
+void Test_UART_queue();
+
 extern uint8_t UART_queue_length;
 
 extern uint8_t UART_queue_out;
-
-extern uint8_t mode;
 
 #endif

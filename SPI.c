@@ -3,9 +3,9 @@
  *
  * Created: 4/3/2017 2:10:56 PM
  *  Author: gusst967
- */
+ */ 
 
-//
+// 
 // void SPI_slave_init()
 // {
 // 	DDRB |= (1 << 6); // MISO as output, slave configuration.
@@ -13,7 +13,7 @@
 // 	SPSR |= (0 << SPI2X);
 // 	SPDR = 0x00; // Clear SPI interrupt flag by reading SPSR and SPDR.
 // }
-//
+// 
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -22,6 +22,7 @@
 #include <math.h>
 #include "SPI.h"
 #include "Sensor_values.h"
+#include "Control.h"
 
 
 /* Queue structure */
@@ -39,91 +40,8 @@ volatile uint8_t SPI_receiving_counter = 0;
 ISR(SPI_STC_vect)
 {
 	volatile uint8_t data = SPDR;
-
-	SPI_queue_put(data);
-
-// 	if(data == 0x00 && SPI_receiving_counter == 0)
-// 	{
-// 		SPI_receiving_counter = 1;
-// 	}
-// 	else if(SPI_receiving_counter == 1)
-// 	{
-// 		IR_conversion(true, data);
-// 		//Store_in_IR_array(true, data);
-// 		SPI_receiving_counter = 2;
-// 	}
-// 	else if(SPI_receiving_counter == 2)
-// 	{
-// 		IR_conversion(false, data);
-// 		//Store_in_IR_array(false, data);
-// 		SPI_receiving_counter = 3;
-// 	}
-// 	else if(SPI_receiving_counter == 3)
-// 	{
-// 		// right tape sensor
-// 		SPI_receiving_counter = 4;
-// 	}
-// 	else if(SPI_receiving_counter == 4)
-// 	{
-// 		// left tape sensor
-// 		SPI_receiving_counter = 5;
-// 	}
-// 	else if(SPI_receiving_counter == 5)
-// 	{
-// 		// right wheel sensor
-// 		SPI_receiving_counter = 6;
-// 	}
-// 	else if(SPI_receiving_counter == 6)
-// 	{
-// 		// left wheel sensor
-// 		SPI_receiving_counter = 7;
-// 	}
-// 	else if(SPI_receiving_counter == 7)
-// 	{
-// 		gyro_rotation_speed = data;
-// 		SPI_receiving_counter = 8;
-// 	}
-// 	else if(SPI_receiving_counter == 8)
-// 	{
-// 		// High byte LIDAR
-// 		SPI_receiving_counter = 9;
-// 	}
-// 	else if(SPI_receiving_counter == 9)
-// 	{
-// 		// Low byte LIDAR
-// 		SPI_receiving_counter = 10;
-// 	}
-// 	else if(SPI_receiving_counter == 10 && data == 0xFF)
-// 	{
-// 		SPI_receiving_counter = 0;
-// 	}
-
-//
-// 	if(SPI_receiving_counter == 0)
-// 	{
-// 		IR_conversion_right(data);0
-// 	}
-// 	else if(SPI_receiving_counter == 1)
-// 	{
-// 		IR_conversion_left(data);
-// 	}
-// 	else if(data == 0x00)
-// 	{
-// 		SPI_receiving_counter = 0;
-// 	}
-// 	SPI_receiving_counter = SPI_receiving_counter + 1;
-// 	if(left_right)
-// 	{
-// 		right_distance = SPDR;
-// 		SPDR = 0xFF;
-// 	}
-// 	else
-// 	{
-// 		left_distance = SPDR;
-// 		SPDR = 0x00;
-// 	}
-
-	//left_right = !left_right;
+	
+	SPI_queue_put(data); // Puts the received data on the queue.	
 }
 
 
@@ -141,7 +59,7 @@ void Spi_init()
  * These are FIFO queues which discard the new data when full.
  *
  * Queue is empty when in == out.
- * If in != out, then
+ * If in != out, then 
  *  - items are placed into in before incrementing in
  *  - items are removed from out before incrementing out
  * Queue is full when in == (out-1 + QUEUE_SIZE) % QUEUE_SIZE;
@@ -166,7 +84,7 @@ void SPI_queue_put(uint8_t new)
 	}
 
 	SPI_queue[SPI_queue_in] = new;
-	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;
+	SPI_queue_in = (SPI_queue_in + 1) % SPI_QUEUE_SIZE;	
 	SPI_queue_length++;
 }
 
@@ -177,9 +95,9 @@ void SPI_queue_get(uint8_t *old)
 		return; /* Queue Empty - nothing to get*/
 	}
 
-	*old = SPI_queue[SPI_queue_out];
+	*old = SPI_queue[SPI_queue_out];	
 	SPI_queue[SPI_queue_out] = 0;
-	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;
+	SPI_queue_out = (SPI_queue_out + 1) % SPI_QUEUE_SIZE;	
 	SPI_queue_length--;
 }
 
@@ -220,34 +138,51 @@ void SPI_queue_remove()
 // }
 
 void Dequeue_SPI_queue()
-{
-	if(SPI_queue_length < 11)
+{		
+	if(SPI_queue_length < 12)
 	{
 		dequeue = false;
 		return;
 	}
+	
 	cli();
 	Start_dequeuing();
 	if(dequeue)
 	{
-		//PORTA |= (1 << 4);
 		uint8_t IR_value;
-		uint8_t LIDAR_value;
+		uint8_t left_wheel;
+		uint8_t right_wheel;
+		uint8_t average_wheel;
+		uint8_t gyro_high;
+		uint8_t gyro_low;
+		uint16_t gyro_data;
+		
+		SPI_queue_remove(); // Startbytes
 		SPI_queue_remove();
-		SPI_queue_remove();
+		
 		SPI_queue_get(&IR_value); // IR right
 		IR_conversion(true, IR_value);
 		SPI_queue_get(&IR_value); // IR left
 		IR_conversion(false, IR_value);
+		
 		SPI_queue_remove(); // Right tape
 		SPI_queue_remove(); // Left tape
-		SPI_queue_remove(); // Right wheel
-		SPI_queue_remove(); // Left wheel
-		SPI_queue_remove(); // Gyro
+		
+		SPI_queue_get(&right_wheel); // Right wheel
+		SPI_queue_get(&left_wheel); // Left wheel
+		average_wheel = (left_wheel + right_wheel) * 10 * 0.5; // * 10 to avoid float
+		Calculate_wheel_sensor_counter(average_wheel);
+		
+		SPI_queue_get(&gyro_high); // Gyro high
+		gyro_data = gyro_high << 8; 
+		SPI_queue_get(&gyro_low); // Gyro low
+		gyro_data |= gyro_low;
+		Gyro_calculation(gyro_data);
+		
 		SPI_queue_remove(); // LIDAR high
 		SPI_queue_remove(); // LIDAR low
 		dequeue = false;
-		//PORTA &= ~(1 << 4);
+		update_control = true;
 	}
 	else
 	{
@@ -260,10 +195,20 @@ void Start_dequeuing()
 {
 	uint8_t first_value = SPI_queue_peek(SPI_queue_out);
 	uint8_t second_value = SPI_queue_peek(SPI_queue_out + 1);
-
+	
 	if(first_value == 0xFF && second_value == 0xFF)
 	{
-		dequeue = true;
+		uint8_t ninth_value = SPI_queue_peek(SPI_queue_out + 8);
+		uint8_t tenth_value = SPI_queue_peek(SPI_queue_out + 9);
+		
+		if(ninth_value == 0xFF && tenth_value == 0xFF)
+		{
+			dequeue = false;
+		}
+		else
+		{
+			dequeue = true;
+		}
 	}
 	else
 	{
