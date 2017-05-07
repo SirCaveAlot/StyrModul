@@ -23,6 +23,8 @@
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
+uint8_t last_movement;
+
 void Test_set_speed()
 {
 	if(!update_control)
@@ -35,36 +37,63 @@ void Test_set_speed()
 	update_control = false; 
 }
 
+
+void Course_simulation()
+{
+	if(mode == 's')
+	{
+		switch(last_movement)
+		{
+			case 'f':
+			UART_queue_put(0);
+			UART_queue_put('r');
+			UART_queue_put(90);
+			last_movement = 'r';
+			break;
+			
+			case 'r':
+			UART_queue_put(0);
+			UART_queue_put('f');
+			UART_queue_put(2);
+			last_movement = 'f';
+			break;
+		}
+	}
+}
+
+
 int main(void)
 {	
 	Timer1_init();
 	Timer2_init();
 	USART_Init(UBBR);
 	Spi_init();
+	Center_grip_arm();
 	DDRD = 0xFA;
 	DDRA = 0xFF;
-	Center_grip_arm();
 	update_control = false;
 	autonomous = false;
+	last_movement = 'r';
 	mode = 's';
 	
 	UART_queue_put(0);
  	UART_queue_put('A');
  	UART_queue_put(0);
-	UART_queue_put(0);
- 	UART_queue_put('r');
- 	UART_queue_put(90);
+	Dequeue_UART_queue();
+	
 	//Test_UART_queue();
 	_delay_ms(1000);
 	sei();
 	
 	while(1)
 	{
+		//Course_simulation();
 		Dequeue_UART_queue(); // Load UART data from communication module.
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
-		
-		//Test_set_speed();
 		Mode_loop();
+		//Test_set_speed();
+		
+		
 		
 // 		if(Standing_still())
 // 		{

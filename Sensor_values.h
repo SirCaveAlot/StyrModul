@@ -17,9 +17,9 @@ extern bool left_side_detected;
 extern uint16_t angle;
 extern uint16_t angle_to_rotate;
 extern uint16_t gyro_rotation_speed;
-extern uint16_t distance_until_stop;
-extern uint16_t stop_distance;
-extern uint16_t travel_distance;
+extern int32_t distance_until_stop;
+extern int32_t stop_distance;
+extern int32_t travel_distance;
 extern uint16_t wheel_sensor_counter;
 extern uint8_t standing_still_counter;
 extern uint8_t velocity;
@@ -40,6 +40,8 @@ void Gyro_calculation();
 void Angle_calculation();
 
 void Set_angle_to_rotate(uint8_t);
+
+void Set_rotation_distance(uint8_t);
 
 void Set_LIDAR_turns(uint8_t);
 

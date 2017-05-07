@@ -156,7 +156,8 @@ void Dequeue_UART_queue()
 		}
 		else if((second_byte == 'l') | (second_byte == 'r'))
 		{
-			Set_angle_to_rotate(data);
+			Set_rotation_distance(data);
+			//Set_angle_to_rotate(data);
 		}
 		
 		mode = second_byte; // more modes, create switch-case.

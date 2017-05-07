@@ -18,7 +18,7 @@
 #include "SPI.h"
 #include "UART.h"
 
-#define MAX_SPEED 0.5
+#define MAX_SPEED 1
 
 float error_prior_both;
 float error_prior_right;
@@ -170,6 +170,12 @@ void Hallway_control_right()
 {
 	float steer_signal_right = Steer_signal_right();
 	float set_speed = Set_speed();
+	if(set_speed <= 0)
+	{
+		OCR1A = 0; // Right
+		OCR1B = 0; // Left
+		return;
+	}
 	if (error_current_right >= 0)
 	{
 		if(set_speed*ICR1 - steer_signal_right < 0)
@@ -202,6 +208,13 @@ void Hallway_control_left()
 {
 	float steer_signal_left = Steer_signal_left();
 	float set_speed = Set_speed();
+	if(set_speed <= 0)
+	{
+		OCR1A = 0; // Right
+		OCR1B = 0; // Left
+		return;
+	}
+	
 	if (error_current_left >= 0)
 	{
 		if(set_speed*ICR1 - steer_signal_left < 0)
@@ -247,105 +260,66 @@ void Rotation_control(bool right) //rotates robot
 		return;
 	}
 	
-	Angle_calculation();
-	int16_t delta_angle = angle_to_rotate - angle; 
+	update_control = true;
+	float set_speed = Set_speed();
 	
 	if(right)
 	{
 		PORTA = (0 << PORTA0) | (1 << PORTA1);
-		
-		if(delta_angle < 300)
-		{
-			OCR1A = 0;
-			OCR1B = 0;
-		}
-		else
-		{
-			OCR1A = MAX_SPEED * ICR1;
-			OCR1B = MAX_SPEED * ICR1;
-		}
+		OCR1A = set_speed * ICR1;
+		OCR1B = set_speed * ICR1;
 	}
 	else
 	{
 		PORTA = (1 << PORTA0) | (0 << PORTA1);
-		
-		if(delta_angle < 300)
-		{
-			OCR1A = 0;
-			OCR1B = 0;
-		}
-		else
-		{
-			OCR1A = MAX_SPEED * ICR1;
-			OCR1B = MAX_SPEED * ICR1;
-		}
+		OCR1A = set_speed * ICR1;
+		OCR1B = set_speed * ICR1;
 	}
 	
 	
-	
-// 	float rotation_speed = Steer_signal_rotation();
+// 	Angle_calculation();
+// 	int16_t delta_angle = angle_to_rotate - angle; 
 // 	
-// 	if (rotation_speed < 0.01) //IF SMALL STEER SIGNAL GIVES PROBLEMS
+// 	if(right)
 // 	{
-// 		if(right)
+// 		PORTA = (0 << PORTA0) | (1 << PORTA1);
+// 		
+// 		if(delta_angle < 300)
 // 		{
 // 			OCR1A = 0;
 // 			OCR1B = 0;
-// 			PORTA = (0 << PORTA0) | (1 << PORTA1);
 // 		}
 // 		else
 // 		{
-// 			OCR1A = 0;
-// 			OCR1B = 0;
-// 			PORTA = (1 << PORTA0) | (0 << PORTA1);
-// 		}
-// 	}
-// 	else if (rotation_speed < MAX_SPEED)
-// 	{
-// 		if(right)
-// 		{
-// 			OCR1A = rotation_speed*ICR1;
-// 			OCR1B = rotation_speed*ICR1;
-// 			PORTA = (0 << PORTA0) | (1 << PORTA1);
-// 		}
-// 		else
-// 		{
-// 			OCR1A = rotation_speed*ICR1;
-// 			OCR1B = rotation_speed*ICR1;
-// 			PORTA = (1 << PORTA0) | (0 << PORTA1);
+// 			OCR1A = MAX_SPEED * ICR1;
+// 			OCR1B = MAX_SPEED * ICR1;
 // 		}
 // 	}
 // 	else
 // 	{
-// 		if (right)
+// 		PORTA = (1 << PORTA0) | (0 << PORTA1);
+// 		
+// 		if(delta_angle < 300)
 // 		{
-// 			OCR1A = MAX_SPEED * ICR1;
-// 			OCR1B = MAX_SPEED * ICR1;
-// 			PORTA = (0 << PORTA0) | (1 << PORTA1);
+// 			OCR1A = 0;
+// 			OCR1B = 0;
 // 		}
 // 		else
 // 		{
 // 			OCR1A = MAX_SPEED * ICR1;
 // 			OCR1B = MAX_SPEED * ICR1;
-// 			PORTA = (1 << PORTA0) | (0 << PORTA1);
-// 		}	
+// 		}
 // 	}
 }
 
 //----------------------------Speed control------------------------------------
 
-float Steer_signal_speed() //steersignal when right side detectable
-{
-	error_prior_speed = error_current_speed;
-	error_current_speed = distance_until_stop - travel_distance; // Control using mm
-	float steer_signal = proportional_gain_speed*error_current_speed + derivative_gain_speed*(error_current_speed - error_prior_speed)*(1/iteration_time);
-	return steer_signal;
-}
-
 float Set_speed() //sets speed given distance to obstacle ahead and then stops
 {
 	Distance_travelled();
-	int16_t delta_distance = distance_until_stop - travel_distance;
+	int16_t delta_distance;
+	delta_distance = distance_until_stop - travel_distance;
+	
 	if(delta_distance <= stop_distance)
 	{
 		return 0;

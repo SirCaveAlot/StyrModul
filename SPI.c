@@ -174,9 +174,9 @@ void Dequeue_SPI_queue()
 		Calculate_wheel_sensor_counter(average_wheel);
 		
 		SPI_queue_get(&gyro_high); // Gyro high
-		gyro_data = gyro_high << 8; 
+		gyro_data = gyro_high; 
 		SPI_queue_get(&gyro_low); // Gyro low
-		gyro_data |= gyro_low;
+		gyro_data = (gyro_data << 8) | gyro_low;
 		Gyro_calculation(gyro_data);
 		
 		SPI_queue_remove(); // LIDAR high

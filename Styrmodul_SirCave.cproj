@@ -43,8 +43,7 @@
       <ToolOptions>
         <InterfaceProperties>
         </InterfaceProperties>
-        <InterfaceName>
-        </InterfaceName>
+        <InterfaceName>JTAG</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.simulator</ToolType>
       <ToolNumber>
@@ -56,7 +55,7 @@
       <ToolOptions>
         <InterfaceProperties>
           <JtagDbgClock>200000</JtagDbgClock>
-          <JtagEnableExtResetOnStartSession>false</JtagEnableExtResetOnStartSession>
+          <JtagEnableExtResetOnStartSession>true</JtagEnableExtResetOnStartSession>
           <JtagInChain>true</JtagInChain>
           <JtagDevicesBefore>1</JtagDevicesBefore>
           <JtagDevicesAfter>1</JtagDevicesAfter>
@@ -137,6 +136,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Control.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Modes.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Modes.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="PWM_SirCave.c">

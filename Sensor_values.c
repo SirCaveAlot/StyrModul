@@ -20,7 +20,8 @@
 #define WHEEL_DIAMETER 63.34
 #define WHEEL_CIRCUMFERENCE (WHEEL_DIAMETER * M_PI)
 #define WHEEL_SLICE (WHEEL_CIRCUMFERENCE/16)
-#define GYRO_OFFSET 1049
+#define GYRO_OFFSET 1230
+#define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
 
 int left_distance;
 int right_distance;
@@ -31,9 +32,9 @@ uint16_t angle;
 uint16_t angle_to_rotate;
 uint16_t gyro_rotation_speed;
 
-uint16_t distance_until_stop;
-uint16_t stop_distance;
-uint16_t travel_distance;
+int32_t distance_until_stop;
+int32_t stop_distance;
+int32_t travel_distance;
 uint16_t wheel_sensor_counter;
 uint8_t standing_still_counter;
 uint8_t velocity;
@@ -113,6 +114,12 @@ void Set_angle_to_rotate(uint8_t data)
 	angle_to_rotate = 100 * data;
 }
 
+void Set_rotation_distance(uint8_t data)
+{
+	distance_until_stop = round((data * ROTATION_DISTANCE) / 90);
+	stop_distance = 150;
+}
+
 
 //--------------------------LIDAR----------------------------------
 
@@ -149,10 +156,12 @@ void Calculate_wheel_sensor_counter(uint8_t data) //Calculates the wheel sensor 
 
 bool Standing_still() // Returns true if the robot is standing still
 {
-	if(standing_still_counter > 10 && ((distance_until_stop < travel_distance + 5) | (distance_until_stop > travel_distance - 5)))
+	if(standing_still_counter > 10)
 	{
 		wheel_sensor_counter = 0;
 		standing_still_counter = 0;
+		distance_until_stop = 0;
+		travel_distance = 0;
 		return true;
 	}
 	return false;

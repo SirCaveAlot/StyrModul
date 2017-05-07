@@ -47,6 +47,12 @@ void Drive_backwards(float velocity_left, float velocity_right)
 	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
+void Stop_motors()
+{
+	Set_speed_right(0);
+	Set_speed_left(0);
+}
+
 void Rotate_clockwise(float velocity_left, float velocity_right)
 {
 	PORTA = (0 << PORTA0) | (1 << PORTA1); // Forward direction on the left side and backwards on the right side.

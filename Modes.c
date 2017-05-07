@@ -40,18 +40,42 @@ void Autonomous_mode()
 	{
 		case 'f':
 		Hallway_control(true);
+		if(Standing_still())
+		{
+			mode = 's';
+		}
 		break;
 		
 		case 'b':
 		Hallway_control(false);
+		if(Standing_still())
+		{
+			mode = 's';
+		}
+		break;
+		
+		case 's':
+		Stop_motors();
 		break;
 		
 		case 'r':
 		Rotation_control(true);
+		if(Standing_still())
+		{
+			mode = 's';
+		}
 		break;
 		
 		case 'l':
 		Rotation_control(false);
+		if(Standing_still())
+		{
+			mode = 's';
+		}
+		break;
+		
+		case 'L':
+		Rotate_LIDAR(0.5);
 		break;
 	}		
 }
@@ -77,7 +101,7 @@ void Manual_mode()
 		break;
 		
 		case 's':
-		Drive_forward(0, 0);
+		Stop_motors();
 		break;
 		
 		case 'o':

@@ -19,6 +19,8 @@ void Drive_forward(float, float);
 
 void Drive_backwards(float, float);
 
+void Stop_motors();
+
 void Rotate_clockwise(float, float);
 
 void Rotate_counter_clockwise(float, float);
