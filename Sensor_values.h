@@ -12,8 +12,10 @@
 
 extern int left_distance;
 extern int right_distance;
+extern int forward_IR_distance;
 extern bool right_side_detected;
 extern bool left_side_detected;
+extern bool forward_IR_detected;
 extern uint16_t angle;
 extern uint16_t angle_to_rotate;
 extern uint16_t gyro_rotation_speed;
@@ -27,13 +29,16 @@ extern uint8_t LIDAR_angle;
 extern uint8_t LIDAR_rotation_speed;
 extern uint8_t LIDAR_rotated_turns;
 extern uint8_t LIDAR_turns;
+extern bool line_detected;
 extern float iteration_time;
 
-void IR_conversion(bool, uint8_t);
+void IR_conversion(char, uint8_t);
 
 void Left_side_detectable();
 
 void Right_side_detectable();
+
+void Forward_IR_detectable();
 
 void Gyro_calculation();
 
@@ -52,5 +57,7 @@ void Distance_travelled();
 void Calculate_wheel_sensor_counter(uint8_t);
 
 bool Standing_still();
+
+void Line_detection(uint8_t);
 
 #endif /* SENSOR_VALUES_H_ */

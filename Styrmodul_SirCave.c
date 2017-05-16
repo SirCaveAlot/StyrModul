@@ -73,33 +73,28 @@ int main(void)
 	DDRA = 0xFF;
 	update_control = false;
 	autonomous = false;
-	last_movement = 'r';
+	mode_complete = true;
+	line_detected = false;
+//	last_movement = 'r';
 	mode = 's';
 	
-	UART_queue_put(0);
- 	UART_queue_put('A');
- 	UART_queue_put(0);
-	Dequeue_UART_queue();
+//
+// 	UART_queue_put(0);
+//  	UART_queue_put('A');
+//  	UART_queue_put(0);
+// 	UART_queue_put(0);
+// 	UART_queue_put('f');
+// 	UART_queue_put(3);
+// 	Dequeue_UART_queue();
 	
 	//Test_UART_queue();
-	_delay_ms(1000);
+	//_delay_ms(1000);
 	sei();
 	
 	while(1)
 	{
-		//Course_simulation();
 		Dequeue_UART_queue(); // Load UART data from communication module.
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		Mode_loop();
-		//Test_set_speed();
-		
-		
-		
-// 		if(Standing_still())
-// 		{
-// 			UART_queue_put(0);
-// 			UART_queue_put('l');
-// 			UART_queue_put(90);
-// 		}
 	}
 }

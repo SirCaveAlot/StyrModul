@@ -17,8 +17,9 @@
 #include "Sensor_values.h"
 #include "SPI.h"
 #include "UART.h"
+#include "Modes.h"
 
-#define MAX_SPEED 1
+#define MAX_SPEED 0.5
 
 float error_prior_both;
 float error_prior_right;
@@ -29,9 +30,9 @@ float error_current_left;
 uint8_t proportional_gain_both = 10;
 uint8_t proportional_gain_right = 20;
 uint8_t proportional_gain_left = 20;
-float derivative_gain_both = 1.8;
-float derivative_gain_right = 3.6;
-float derivative_gain_left = 3.6;
+float derivative_gain_both = 1.5;
+float derivative_gain_right = 3.0;
+float derivative_gain_left = 3.0;
 //
 float error_prior_speed;
 float error_current_speed;
@@ -112,6 +113,7 @@ void Hallway_control(bool forward)
 	
 	Right_side_detectable();
 	Left_side_detectable();
+	Forward_IR_detectable();
 	update_control = false;
 	Direction(forward);
 	
@@ -129,7 +131,9 @@ void Hallway_control(bool forward)
 	}
 	else
 	{
-		Drive_forward(0, 0);
+		float velocity = Set_speed();
+		OCR1A = velocity * ICR1;
+		OCR1B = velocity * ICR1;
 	}
 }
 
@@ -275,41 +279,6 @@ void Rotation_control(bool right) //rotates robot
 		OCR1A = set_speed * ICR1;
 		OCR1B = set_speed * ICR1;
 	}
-	
-	
-// 	Angle_calculation();
-// 	int16_t delta_angle = angle_to_rotate - angle; 
-// 	
-// 	if(right)
-// 	{
-// 		PORTA = (0 << PORTA0) | (1 << PORTA1);
-// 		
-// 		if(delta_angle < 300)
-// 		{
-// 			OCR1A = 0;
-// 			OCR1B = 0;
-// 		}
-// 		else
-// 		{
-// 			OCR1A = MAX_SPEED * ICR1;
-// 			OCR1B = MAX_SPEED * ICR1;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		PORTA = (1 << PORTA0) | (0 << PORTA1);
-// 		
-// 		if(delta_angle < 300)
-// 		{
-// 			OCR1A = 0;
-// 			OCR1B = 0;
-// 		}
-// 		else
-// 		{
-// 			OCR1A = MAX_SPEED * ICR1;
-// 			OCR1B = MAX_SPEED * ICR1;
-// 		}
-// 	}
 }
 
 //----------------------------Speed control------------------------------------
@@ -318,16 +287,41 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 {
 	Distance_travelled();
 	int16_t delta_distance;
-	delta_distance = distance_until_stop - travel_distance;
+	if(forward_IR_detected && mode == 'f')
+	{
+		delta_distance = forward_IR_distance - 1000; 
+	}
+	else
+	{
+		delta_distance = distance_until_stop - travel_distance;
+	}
 	
 	if(delta_distance <= stop_distance)
 	{
-		return 0;
+		return Correct_to_center_of_tile();
 	}
 	else
 	{
 		return MAX_SPEED;
 	}
+}
+
+float Correct_to_center_of_tile()
+{
+	if(forward_IR_detected && mode == 'f')
+	{
+		if(forward_IR_distance > 1150)
+		{
+			Direction(true);
+			return 0.2;
+		}	
+		else if(forward_IR_distance < 850)
+		{
+			Direction(false);
+			return 0.2;
+		}
+	}
+	return 0;
 }
 
 //----------------------------LIDAR control------------------------------------

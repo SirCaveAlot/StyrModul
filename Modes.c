@@ -21,6 +21,7 @@
 
 uint8_t mode;
 bool autonomous;
+bool mode_complete;
 
 void Mode_loop()
 {
@@ -36,12 +37,23 @@ void Mode_loop()
 
 void Autonomous_mode()
 {
+	if(line_detected)
+	{
+		mode = 's';
+		UART_transmission('t');
+		line_detected = false;
+		mode_complete = true;
+		return;
+	}
+
 	switch(mode)
 	{
 		case 'f':
 		Hallway_control(true);
 		if(Standing_still())
 		{
+			UART_transmission('d');
+			mode_complete = true;
 			mode = 's';
 		}
 		break;
@@ -50,18 +62,24 @@ void Autonomous_mode()
 		Hallway_control(false);
 		if(Standing_still())
 		{
+			UART_transmission('d');
+			mode_complete = true;
 			mode = 's';
 		}
 		break;
 		
 		case 's':
 		Stop_motors();
+		mode_complete = true;
+		standing_still_counter = 0;
 		break;
 		
 		case 'r':
 		Rotation_control(true);
 		if(Standing_still())
 		{
+			UART_transmission('d');
+			mode_complete = true;
 			mode = 's';
 		}
 		break;
@@ -70,12 +88,34 @@ void Autonomous_mode()
 		Rotation_control(false);
 		if(Standing_still())
 		{
+			UART_transmission('d');
+ 			mode_complete = true;
 			mode = 's';
+			angle = 0;
+			angle_to_rotate = 0;
+			wheel_sensor_counter = 0;
+			//standing_still_counter = 0;
 		}
 		break;
 		
 		case 'L':
-		Rotate_LIDAR(0.5);
+		Rotate_LIDAR(0.2);
+		break;
+		
+		case 'S':
+		Stop_LIDAR();
+		break;
+		
+		case 'o':
+		Open_grip_arm();
+		break;
+		
+		case 'c':
+		Close_grip_arm();
+		break;
+		
+		case 'm':
+		Center_grip_arm();
 		break;
 	}		
 }
@@ -117,10 +157,10 @@ void Manual_mode()
 		break;
 		
 		case 'L':
-		Rotate_LIDAR(0.5);
+		Rotate_LIDAR(0.2);
 		break;
 		
-		case 'n':
+		case 'S':
 		Stop_LIDAR();
 		break;
 	}	

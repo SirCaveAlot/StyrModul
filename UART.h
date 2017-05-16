@@ -11,7 +11,7 @@
 
 void USART_Init(unsigned int);
 
-void Data_transmission(char);
+void UART_transmission(uint8_t);
 
 void UART_queue_init(void);
 

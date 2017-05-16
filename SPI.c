@@ -3,17 +3,7 @@
  *
  * Created: 4/3/2017 2:10:56 PM
  *  Author: gusst967
- */ 
-
-// 
-// void SPI_slave_init()
-// {
-// 	DDRB |= (1 << 6); // MISO as output, slave configuration.
-// 	SPCR |= (1 << SPE) | (1 << SPIE); // SPI and SPI interrupt enabled.
-// 	SPSR |= (0 << SPI2X);
-// 	SPDR = 0x00; // Clear SPI interrupt flag by reading SPSR and SPDR.
-// }
-// 
+ */  
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -23,6 +13,7 @@
 #include "SPI.h"
 #include "Sensor_values.h"
 #include "Control.h"
+#include "Modes.h"
 
 
 /* Queue structure */
@@ -33,15 +24,16 @@ uint8_t SPI_queue_in, SPI_queue_out;
 uint8_t SPI_queue_length;
 bool dequeue;
 
-volatile uint8_t SPI_receiving_counter = 0;
 
 //---------------------Interrupts--------------
 
 ISR(SPI_STC_vect)
 {
-	volatile uint8_t data = SPDR;
-	
-	SPI_queue_put(data); // Puts the received data on the queue.	
+	if(autonomous)
+	{
+		volatile uint8_t data = SPDR;
+		SPI_queue_put(data); // Puts the received data on the queue.	
+	}
 }
 
 
@@ -117,39 +109,19 @@ void SPI_queue_remove()
 	SPI_queue_length--;
 }
 
-// uint8_t SPI_queue_length()
-// {
-// 	if(SPI_queue_in == ((SPI_queue_out + SPI_QUEUE_ELEMENTS) % SPI_QUEUE_SIZE))
-// 	{
-// 		return SPI_QUEUE_ELEMENTS;
-// 	}
-// 	else if(SPI_queue_in == SPI_queue_out)
-// 	{
-// 		return 0;
-// 	}
-// 	else if(SPI_queue_out > SPI_queue_in)
-// 	{
-// 		return SPI_QUEUE_SIZE - (SPI_queue_out - SPI_queue_in);
-// 	}
-// 	else
-// 	{
-// 		return SPI_queue_in - SPI_queue_out;
-// 	}
-// }
-
 void Dequeue_SPI_queue()
 {		
-	if(SPI_queue_length < 12)
+	if(SPI_queue_length < 13)
 	{
 		dequeue = false;
 		return;
 	}
 	
-	cli();
 	Start_dequeuing();
 	if(dequeue)
 	{
 		uint8_t IR_value;
+		uint8_t tape_data;
 		uint8_t left_wheel;
 		uint8_t right_wheel;
 		uint8_t average_wheel;
@@ -161,12 +133,15 @@ void Dequeue_SPI_queue()
 		SPI_queue_remove();
 		
 		SPI_queue_get(&IR_value); // IR right
-		IR_conversion(true, IR_value);
+		IR_conversion('r', IR_value);
 		SPI_queue_get(&IR_value); // IR left
-		IR_conversion(false, IR_value);
+		IR_conversion('l', IR_value);
+		SPI_queue_get(&IR_value);
+		IR_conversion('f', IR_value);
 		
 		SPI_queue_remove(); // Right tape
-		SPI_queue_remove(); // Left tape
+		SPI_queue_get(&tape_data); // Left tape
+		Line_detection(tape_data);
 		
 		SPI_queue_get(&right_wheel); // Right wheel
 		SPI_queue_get(&left_wheel); // Left wheel
@@ -188,7 +163,6 @@ void Dequeue_SPI_queue()
 	{
 		SPI_queue_remove();
 	}
-	sei();
 }
 
 void Start_dequeuing()
@@ -216,10 +190,12 @@ void Start_dequeuing()
 	}
 }
 
+
+
 void Test_SPI_queue()
 {
- 	SPI_queue_put(0xFF);
- 	SPI_queue_put(0xFF);
+	SPI_queue_put(0xFF);
+	SPI_queue_put(0xFF);
 	SPI_queue_put(100);
 	SPI_queue_put(80);
 	SPI_queue_put(100);

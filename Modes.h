@@ -19,4 +19,6 @@ extern uint8_t mode;
 
 extern bool autonomous;
 
+extern bool mode_complete;
+
 #endif /* MODES_H_ */

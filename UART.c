@@ -25,15 +25,7 @@
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
-// Received data
-uint8_t mode;
-volatile uint8_t receiving_counter = 0;
-uint16_t data_buffer = 0;
-bool mode_changed;
-
 // Data for transmission
-char mode_complete = 'd';
-uint8_t transmission_counter = 0;
 
 /* Queue structure */
 #define UART_QUEUE_ELEMENTS 25
@@ -41,15 +33,25 @@ uint8_t transmission_counter = 0;
 volatile uint8_t UART_queue[UART_QUEUE_SIZE];
 uint8_t UART_queue_in, UART_queue_out;
 uint8_t UART_queue_length;
+uint8_t UART_counter;
 
 //-------------------Interrupts--------------------------
 
 ISR(USART0_RX_vect)
 {
-	//PORTA |= (1 << PORTA5);
  	volatile uint8_t data = UDR0;
-	UART_queue_put(data);
-	//PORTA &= ~(1 << PORTA5);
+	if(data == 'B')
+	{
+		distance_until_stop = 1000;
+		stop_distance = 550;
+		wheel_sensor_counter = 0;
+		mode_complete = false;
+		mode = 'b';
+	}
+	else
+	{
+		UART_queue_put(data);
+	}
 }
 
 
@@ -70,12 +72,10 @@ void USART_Init(unsigned int baud)
 
 //----------------------Functions-----------------------
 
-void Data_transmission(char data)
+void UART_transmission(uint8_t data)
 {
 	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
 	UDR0 = data; // Puts the transmission data on the transmission register.
-// 	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
-// 	UDR0 = 0x00; // Sends stopbyte
 }
 
 
@@ -128,6 +128,15 @@ void UART_queue_remove()
 	UART_queue_length--;
 }
 
+void Clear_UART_queue()
+{
+	while(UART_queue_in != UART_queue_out)
+	{
+		return;
+	}
+	
+}
+
 void Dequeue_UART_queue()
 {
 	if(UART_queue_length < 3)
@@ -135,34 +144,168 @@ void Dequeue_UART_queue()
 		return;
 	}
 	
-	uint8_t first_byte;
-	UART_queue_get(&first_byte);
-	
-	if(first_byte == 0x00)
+	if(autonomous)
 	{
-		uint8_t second_byte = 0;
-		uint8_t data = 0;
-		UART_queue_get(&second_byte);
-		UART_queue_get(&data);
+		uint8_t first_byte;
+		UART_queue_get(&first_byte);
 		
-		if(second_byte == 'A')
+		if(first_byte == 0)
 		{
-			autonomous = !autonomous;
-			return;
+			uint8_t second_byte = UART_queue_peek(UART_queue_out);
+			
+			if(second_byte == 0)
+			{
+				return;
+			}
+			
+			UART_queue_get(&second_byte);
+			
+			if(second_byte == 'A')
+			{
+				autonomous = false;
+				mode_complete = true;
+				mode = 's';
+				wheel_sensor_counter = 0;
+				standing_still_counter = 0;
+				distance_until_stop = 0;
+				travel_distance = 0;
+				angle = 0;
+				angle_to_rotate = 0;
+				UART_queue_remove();
+				return;
+			}
+			
+			if(mode_complete)
+			{
+				uint8_t data;
+				UART_queue_get(&data);
+				
+				if((second_byte == 'f') || (second_byte == 'b'))
+				{
+					mode_complete = false;
+					Set_distance_until_stop(data);
+				}
+				else if((second_byte == 'l') || (second_byte == 'r'))
+				{
+					mode_complete = false;
+					Set_rotation_distance(data);
+				}
+				
+				mode = second_byte;
+			}
 		}
-		else if((second_byte == 'f') | (second_byte == 'b'))
-		{
-			Set_distance_until_stop(data);		
-		}
-		else if((second_byte == 'l') | (second_byte == 'r'))
-		{
-			Set_rotation_distance(data);
-			//Set_angle_to_rotate(data);
-		}
+	}
+	else
+	{
+		uint8_t first_byte;
+		UART_queue_get(&first_byte);
 		
-		mode = second_byte; // more modes, create switch-case.
+		if(first_byte == 0)
+		{
+			uint8_t second_byte = UART_queue_peek(UART_queue_out);
+			
+			if(second_byte == 0)
+			{
+				return;
+			}
+			
+			UART_queue_get(&second_byte);
+			
+			UART_queue_remove();
+			
+			if(second_byte == 'A')
+			{
+				autonomous = true;
+				return;
+			}
+			
+			mode = second_byte;
+		}
 	}
 }
+	
+	
+	
+	
+	
+// 	uint8_t first_byte;
+// 	UART_queue_get(&first_byte);
+// 	
+// 	if(first_byte == 0x00)
+// 	{	
+// 		uint8_t next_data;
+// 		next_data = UART_queue_peek(UART_queue_out);
+// 			
+// 		if(next_data == 0x00)
+// 		{
+// 			return;
+// 		}
+// 		
+// 		uint8_t second_byte;
+// 		UART_queue_get(&second_byte);
+// 		//PORTA = (second_byte | 0x0F);
+// 		
+// 		if(second_byte == 'A')
+// 		{
+// 			autonomous = !autonomous;
+// 			if(autonomous)
+// 			{
+// 				PORTA |= (1 << PORTA0);
+// 			}
+// 			else
+// 			{
+// 				PORTA &= ~(1 << PORTA0);
+// 			}
+// 			mode = 's';
+// 			UART_queue_remove();
+// 			return;
+// 		}
+// 		
+// 		if(!autonomous)
+// 		{
+// 			mode = second_byte;
+// 			UART_queue_remove();
+// 			return;
+// 		}
+// 		
+// 		if(!mode_complete)
+// 		{
+// 			UART_queue_remove();
+// 			return;
+// 		}
+// 		/*mode = second_byte;*/
+// 		
+// 		uint8_t data;
+// 		UART_queue_get(&data);
+// 		
+// 		switch(second_byte)
+// 		{
+// 			case 'f':
+// 			mode = 'f';
+// 			mode_complete = false;
+// 			Set_distance_until_stop(data);
+// 			break;
+// 			
+// 			case 'b':
+// 			mode = 'b';
+// 			mode_complete = false;
+// 			Set_distance_until_stop(data);
+// 			break;
+// 			
+// 			case 'r':
+// 			mode = 'r';
+// 			mode_complete = false;
+// 			Set_rotation_distance(data);
+// 			break; 
+// 			
+// 			case 'l':
+// 			mode = 'l';
+// 			mode_complete = false;
+// 			Set_rotation_distance(data);
+// 			break;
+// 		}
+// 	}
+// }
 
 void Test_UART_queue()
 {

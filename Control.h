@@ -29,6 +29,8 @@ void Rotation_control(bool);
 
 float Set_speed();
 
+float Correct_to_center_of_tile();
+
 void Speed_test();
 
 extern bool update_control;
