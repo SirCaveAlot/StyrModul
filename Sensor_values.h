@@ -31,6 +31,7 @@ extern uint8_t LIDAR_rotated_turns;
 extern uint8_t LIDAR_turns;
 extern bool line_detected;
 extern float iteration_time;
+extern bool first_detection;
 
 void IR_conversion(char, uint8_t);
 

@@ -30,9 +30,9 @@ float error_current_left;
 uint8_t proportional_gain_both = 10;
 uint8_t proportional_gain_right = 20;
 uint8_t proportional_gain_left = 20;
-float derivative_gain_both = 1.5;
-float derivative_gain_right = 3.0;
-float derivative_gain_left = 3.0;
+float derivative_gain_both = 1.8;
+float derivative_gain_right = 3.6;
+float derivative_gain_left = 3.6;
 //
 float error_prior_speed;
 float error_current_speed;
@@ -47,6 +47,8 @@ uint8_t proportional_gain_rotation = 10;
 float derivative_gain_rotation = 0.5;
 
 bool update_control;
+bool after_right_turn;
+bool drive_anyways;
 //
 
 
@@ -111,9 +113,6 @@ void Hallway_control(bool forward)
 		return;
 	}
 	
-	Right_side_detectable();
-	Left_side_detectable();
-	Forward_IR_detectable();
 	update_control = false;
 	Direction(forward);
 	
@@ -125,6 +124,11 @@ void Hallway_control(bool forward)
 	{
 		Hallway_control_right();
 	}
+	else if(competition_mode == 1 && after_right_turn && !right_side_detected)
+	{
+		OCR1A = MAX_SPEED * ICR1;
+		OCR1B = MAX_SPEED * ICR1;
+	}
 	else if(!right_side_detected && left_side_detected)
 	{
 		Hallway_control_left();
@@ -135,6 +139,7 @@ void Hallway_control(bool forward)
 		OCR1A = velocity * ICR1;
 		OCR1B = velocity * ICR1;
 	}
+	
 }
 
 void Hallway_control_both()
@@ -264,7 +269,7 @@ void Rotation_control(bool right) //rotates robot
 		return;
 	}
 	
-	update_control = true;
+	update_control = false;
 	float set_speed = Set_speed();
 	
 	if(right)
@@ -281,29 +286,112 @@ void Rotation_control(bool right) //rotates robot
 	}
 }
 
+float Correct_angle_from_gyro()
+{
+	int16_t delta_angle = angle_to_rotate - angle;
+	if(mode == 'r')
+	{
+		if(delta_angle < 300)
+		{
+			PORTA = (1 << PORTA0) | (0 << PORTA1); // If the robot has rotated to much, rotate back
+			return 0.2;
+		}
+		else if(delta_angle > 600)
+		{
+			PORTA = (0 << PORTA0) | (1 << PORTA1); // If the robot hasn't rotated enough, rotate more
+			return 0.2;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else if(mode == 'l')
+	{
+		if(delta_angle < 300)
+		{
+			PORTA = (0 << PORTA0) | (1 << PORTA1); // If the robot has rotated to much, rotate back
+			return 0.2;
+		}
+		else if(delta_angle > 600)
+		{
+			PORTA = (1 << PORTA0) | (0 << PORTA1); // If the robot hasn't rotated enough, rotate more
+			return 0.2;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 //----------------------------Speed control------------------------------------
 
 float Set_speed() //sets speed given distance to obstacle ahead and then stops
 {
 	Distance_travelled();
-	int16_t delta_distance;
-	if(forward_IR_detected && mode == 'f')
+	int16_t delta_distance = 0;
+	if(competition_mode == 0)
 	{
-		delta_distance = forward_IR_distance - 1000; 
+		if(forward_IR_detected && mode == 'f')
+		{
+			delta_distance = forward_IR_distance - 1000;
+		}
+		else
+		{
+			delta_distance = distance_until_stop - travel_distance;
+		}
 	}
-	else
+	else if(competition_mode == 1)
 	{
-		delta_distance = distance_until_stop - travel_distance;
+		if(forward_IR_detected && mode == 'f')
+		{
+			delta_distance = forward_IR_distance - 1000;
+		}
+		else if(mode == 'f' && right_side_detected)
+		{
+			if(first_detection)
+			{
+				distance_until_stop = travel_distance + 2000;
+				first_detection = false;
+			}
+			
+			delta_distance = distance_until_stop - travel_distance;
+		}
+		else
+		{
+			delta_distance = distance_until_stop - travel_distance;
+		}
 	}
 	
-	if(delta_distance <= stop_distance)
-	{
-		return Correct_to_center_of_tile();
-	}
-	else
-	{
-		return MAX_SPEED;
-	}
+//	if(mode == 'f' || mode == 'b')
+//	{
+		
+		if(delta_distance <= stop_distance)
+		{
+			return Correct_to_center_of_tile();
+		}
+		else
+		{
+			return MAX_SPEED;
+		}
+//	}
+// 	else if(mode == 'l' || mode == 'r')
+// 	{
+// 		if(delta_distance <= stop_distance)
+// 		{
+// 			return 0;//Correct_angle_from_gyro();
+// 		}
+// 		else
+// 		{
+// 			return MAX_SPEED;
+// 		}
+// 	}
+// 	return 0;
 }
 
 float Correct_to_center_of_tile()

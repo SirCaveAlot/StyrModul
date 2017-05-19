@@ -175,6 +175,14 @@ void Dequeue_UART_queue()
 				return;
 			}
 			
+			if(second_byte == 'C')
+			{
+				competition_mode++;
+				mode_complete = true;
+				UART_queue_remove();
+				return;
+			}
+			
 			if(mode_complete)
 			{
 				uint8_t data;
@@ -188,6 +196,7 @@ void Dequeue_UART_queue()
 				else if((second_byte == 'l') || (second_byte == 'r'))
 				{
 					mode_complete = false;
+					Set_angle_to_rotate(data);
 					Set_rotation_distance(data);
 				}
 				
@@ -195,7 +204,7 @@ void Dequeue_UART_queue()
 			}
 		}
 	}
-	else
+	else // Manual mode
 	{
 		uint8_t first_byte;
 		UART_queue_get(&first_byte);

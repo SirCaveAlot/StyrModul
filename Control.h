@@ -27,12 +27,17 @@ void Hallway_control_right();
 
 void Rotation_control(bool);
 
+float Correct_angle_from_gyro();
+
 float Set_speed();
+
+void Right_side_detected_again();
 
 float Correct_to_center_of_tile();
 
 void Speed_test();
 
 extern bool update_control;
+extern bool after_right_turn;
 
 #endif /* CONTROL_H_ */

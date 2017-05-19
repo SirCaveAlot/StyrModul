@@ -16,11 +16,13 @@
 #include "Sensor_values.h"
 #include "UART.h"
 #include "Modes.h"
+#include "Control.h"
 
 #define WHEEL_DIAMETER 63.34
 #define WHEEL_CIRCUMFERENCE (WHEEL_DIAMETER * M_PI)
 #define WHEEL_SLICE (WHEEL_CIRCUMFERENCE/16)
 #define GYRO_OFFSET 1230
+#define GYRO_CONSTANT 0.366748166259168704156479
 #define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
 
 int left_distance;
@@ -47,6 +49,8 @@ uint8_t LIDAR_turns;
 bool line_detected;
 float iteration_time = 0.02; // 20 ms
 
+bool first_detection;
+
 uint16_t left_IR_array[2] = {0, 0};
 uint16_t right_IR_array[2] = {0, 0};
 uint16_t LIDAR_array[2] = {0, 0};
@@ -61,15 +65,18 @@ void IR_conversion(char direction, uint8_t IR_value)
 	if(direction == 'r')
 	{
 		right_distance = distance;
+		Right_side_detectable();
 	}
 	else if(direction == 'l')
 	{
 		left_distance = distance;
+		Left_side_detectable();
 	}
 	else if(direction == 'f')
 	{
 		distance = floor(100 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
 		forward_IR_distance = distance;
+		Forward_IR_detectable();
 	}	
 }
 
@@ -94,6 +101,14 @@ void Right_side_detectable()
 	else
 	{
 		right_side_detected = true;
+		if(last_mode == 'r' && mode == 'f' && !first_detection)
+		{
+			first_detection = true;
+		}
+		if(after_right_turn)
+		{
+			after_right_turn = false;
+		}
 	}
 }
 
@@ -115,11 +130,11 @@ void Gyro_calculation(uint16_t gyro_data)
 {
 	if(mode == 'l')
 	{
-		gyro_rotation_speed = GYRO_OFFSET - gyro_data;
+		gyro_rotation_speed = (GYRO_OFFSET - gyro_data) * GYRO_CONSTANT;
 	}
 	else if(mode == 'r')
 	{
-		gyro_rotation_speed = gyro_data - GYRO_OFFSET;
+		gyro_rotation_speed = (gyro_data - GYRO_OFFSET) * GYRO_CONSTANT;
 	}
 }
 
@@ -153,7 +168,7 @@ void Set_LIDAR_turns(uint8_t turns)
 void Set_distance_until_stop(uint8_t number_of_modules)
 {
 	distance_until_stop = 4000 * number_of_modules;
-	stop_distance = 750 + (0.5 /*MAX_SPEED*/ * (number_of_modules - 1) * 25); 
+	stop_distance = 550 + (0.5 /*MAX_SPEED*/ * (number_of_modules - 1) * 25); 
 }
 
 void Distance_travelled() //Calculates the travelled distance
@@ -178,10 +193,11 @@ bool Standing_still() // Returns true if the robot is standing still
 {
 	if(standing_still_counter > 30)
 	{
+		last_mode = mode;
 		wheel_sensor_counter = 0;
 		standing_still_counter = 0;
-		distance_until_stop = 0;
-		travel_distance = 0;
+		mode_complete = true;
+		
 		angle = 0;
 		angle_to_rotate = 0;
 		return true;

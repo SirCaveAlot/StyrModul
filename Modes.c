@@ -20,6 +20,9 @@
 #include "PWM_SirCave.h"
 
 uint8_t mode;
+uint8_t last_mode;
+uint8_t competition_mode;
+bool change_competition_mode;
 bool autonomous;
 bool mode_complete;
 
@@ -37,14 +40,14 @@ void Mode_loop()
 
 void Autonomous_mode()
 {
-	if(line_detected)
-	{
-		mode = 's';
-		UART_transmission('t');
-		line_detected = false;
-		mode_complete = true;
-		return;
-	}
+// 	if(line_detected)
+// 	{
+// 		mode = 's';
+// 		UART_transmission('t');
+// 		line_detected = false;
+// 		mode_complete = true;
+// 		return;
+// 	}
 
 	switch(mode)
 	{
@@ -78,9 +81,14 @@ void Autonomous_mode()
 		Rotation_control(true);
 		if(Standing_still())
 		{
+			last_mode = 'r';
 			UART_transmission('d');
 			mode_complete = true;
 			mode = 's';
+			after_right_turn = true;
+			angle = 0;
+			angle_to_rotate = 0;
+			wheel_sensor_counter = 0;
 		}
 		break;
 		

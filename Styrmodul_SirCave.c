@@ -73,22 +73,26 @@ int main(void)
 	DDRA = 0xFF;
 	update_control = false;
 	autonomous = false;
-	mode_complete = true;
+	mode_complete = true; 
 	line_detected = false;
 //	last_movement = 'r';
 	mode = 's';
+	competition_mode = 0;
+	distance_until_stop = 0;
+	travel_distance = 0;
+	first_detection = false;
+	after_right_turn = false;
 	
-//
+
 // 	UART_queue_put(0);
 //  	UART_queue_put('A');
 //  	UART_queue_put(0);
 // 	UART_queue_put(0);
-// 	UART_queue_put('f');
-// 	UART_queue_put(3);
-// 	Dequeue_UART_queue();
+// 	UART_queue_put('r');
+// 	UART_queue_put(90);
+//  	Dequeue_UART_queue();
 	
 	//Test_UART_queue();
-	//_delay_ms(1000);
 	sei();
 	
 	while(1)
@@ -96,5 +100,25 @@ int main(void)
 		Dequeue_UART_queue(); // Load UART data from communication module.
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		Mode_loop();
+		if(competition_mode == 1)
+		{
+			PORTA |= (1 << 5);
+		}
+		else if(competition_mode == 2)
+		{
+			PORTA |= (1 << 6);
+		}
+		else if(competition_mode == 3)
+		{
+			PORTA |= (1 << 7);
+		}
+		if(right_side_detected)
+		{
+			PORTA |= 0b10000000;
+		}
+		else
+		{
+			PORTA &= 0b00001111;
+		}
 	}
 }

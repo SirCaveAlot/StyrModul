@@ -153,6 +153,7 @@ void Dequeue_SPI_queue()
 		SPI_queue_get(&gyro_low); // Gyro low
 		gyro_data = (gyro_data << 8) | gyro_low;
 		Gyro_calculation(gyro_data);
+		Angle_calculation();
 		
 		SPI_queue_remove(); // LIDAR high
 		SPI_queue_remove(); // LIDAR low
