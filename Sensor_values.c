@@ -101,7 +101,7 @@ void Right_side_detectable()
 	else
 	{
 		right_side_detected = true;
-		if(last_mode == 'r' && mode == 'f' && !first_detection)
+		if(mode == 'f' && !first_detection)
 		{
 			first_detection = true;
 		}
@@ -152,7 +152,7 @@ void Set_angle_to_rotate(uint8_t data)
 void Set_rotation_distance(uint8_t data)
 {
 	distance_until_stop = round((data * ROTATION_DISTANCE) / 90);
-	stop_distance = 150;
+	stop_distance = 250 - data;
 }
 
 
@@ -197,6 +197,7 @@ bool Standing_still() // Returns true if the robot is standing still
 		wheel_sensor_counter = 0;
 		standing_still_counter = 0;
 		mode_complete = true;
+		first_detection = false;
 		
 		angle = 0;
 		angle_to_rotate = 0;

@@ -177,7 +177,7 @@ void Dequeue_UART_queue()
 			
 			if(second_byte == 'C')
 			{
-				competition_mode++;
+				competition_mode = 1;
 				mode_complete = true;
 				UART_queue_remove();
 				return;
@@ -187,6 +187,14 @@ void Dequeue_UART_queue()
 			{
 				uint8_t data;
 				UART_queue_get(&data);
+				if(data == 180)
+				{
+					turn_around = true;
+				}
+				else
+				{
+					turn_around = false;
+				}
 				
 				if((second_byte == 'f') || (second_byte == 'b'))
 				{

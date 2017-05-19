@@ -82,6 +82,7 @@ int main(void)
 	travel_distance = 0;
 	first_detection = false;
 	after_right_turn = false;
+	turn_around = false;
 	
 
 // 	UART_queue_put(0);
@@ -118,7 +119,7 @@ int main(void)
 		}
 		else
 		{
-			PORTA &= 0b00001111;
+			PORTA &= 0b00101111;
 		}
 	}
 }

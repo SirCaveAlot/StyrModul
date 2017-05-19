@@ -48,7 +48,6 @@ float derivative_gain_rotation = 0.5;
 
 bool update_control;
 bool after_right_turn;
-bool drive_anyways;
 //
 
 
@@ -128,6 +127,12 @@ void Hallway_control(bool forward)
 	{
 		OCR1A = MAX_SPEED * ICR1;
 		OCR1B = MAX_SPEED * ICR1;
+	}
+	else if(competition_mode == 1 && mode == 'f' && turn_around)
+	{
+		OCR1A = MAX_SPEED * ICR1;
+		OCR1B = MAX_SPEED * ICR1;
+		turn_around = false;
 	}
 	else if(!right_side_detected && left_side_detected)
 	{
@@ -358,6 +363,11 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 			{
 				distance_until_stop = travel_distance + 2000;
 				first_detection = false;
+			}
+			
+			if(last_mode == 'l')
+			{
+				Set_distance_until_stop(15);
 			}
 			
 			delta_distance = distance_until_stop - travel_distance;

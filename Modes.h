@@ -20,5 +20,6 @@ extern uint8_t last_mode;
 extern uint8_t competition_mode;
 extern bool autonomous;
 extern bool mode_complete;
+extern bool turn_around;
 
 #endif /* MODES_H_ */

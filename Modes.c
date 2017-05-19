@@ -25,6 +25,7 @@ uint8_t competition_mode;
 bool change_competition_mode;
 bool autonomous;
 bool mode_complete;
+bool turn_around;
 
 void Mode_loop()
 {
@@ -96,6 +97,7 @@ void Autonomous_mode()
 		Rotation_control(false);
 		if(Standing_still())
 		{
+			last_mode = 'l';
 			UART_transmission('d');
  			mode_complete = true;
 			mode = 's';
