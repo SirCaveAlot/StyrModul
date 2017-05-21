@@ -22,7 +22,8 @@
 #define WHEEL_CIRCUMFERENCE (WHEEL_DIAMETER * M_PI)
 #define WHEEL_SLICE (WHEEL_CIRCUMFERENCE/16)
 #define GYRO_OFFSET 1230
-#define GYRO_CONSTANT 0.366748166259168704156479
+#define GYRO_CONSTANT_RIGHT 0.353 //0.366748166259168704156479
+#define GYRO_CONSTANT_LEFT 0.375
 #define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
 
 int left_distance;
@@ -32,9 +33,9 @@ bool left_side_detected;
 bool right_side_detected;
 bool forward_IR_detected;
 
-uint16_t angle;
-uint16_t angle_to_rotate;
-uint16_t gyro_rotation_speed;
+int16_t angle;
+int16_t angle_to_rotate;
+int16_t gyro_rotation_speed;
 
 int32_t distance_until_stop;
 int32_t stop_distance;
@@ -61,7 +62,7 @@ uint16_t LIDAR_array[2] = {0, 0};
 
 void IR_conversion(char direction, uint8_t IR_value)
 {
-	uint16_t distance = floor(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
+	uint16_t distance = round(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
 	if(direction == 'r')
 	{
 		right_distance = distance;
@@ -82,7 +83,7 @@ void IR_conversion(char direction, uint8_t IR_value)
 
 void Left_side_detectable()
 {
-	if(left_distance > 300)
+	if(left_distance > 200)
 	{
 		left_side_detected = false;
 	}
@@ -94,7 +95,7 @@ void Left_side_detectable()
 
 void Right_side_detectable()
 {
-	if(right_distance > 300)
+	if(right_distance > 200)
 	{
 		right_side_detected = false;
 	}
@@ -114,7 +115,7 @@ void Right_side_detectable()
 
 void Forward_IR_detectable()
 {
-	if(forward_IR_distance > 3000)
+	if(forward_IR_distance > 2000)
 	{
 		forward_IR_detected = false;
 	}
@@ -128,19 +129,25 @@ void Forward_IR_detectable()
 
 void Gyro_calculation(uint16_t gyro_data)
 {
-	if(mode == 'l')
+	if(gyro_data > 1400 || gyro_data < 1000)
 	{
-		gyro_rotation_speed = (GYRO_OFFSET - gyro_data) * GYRO_CONSTANT;
+		if(mode == 'r')
+		{
+			gyro_rotation_speed = (GYRO_OFFSET - gyro_data) * (GYRO_CONSTANT_RIGHT - (0.0005 * (180 - angle_to_rotate) / 90));
+			return;
+		}
+		else if(mode == 'l')
+		{
+			gyro_rotation_speed = (gyro_data - GYRO_OFFSET) * (GYRO_CONSTANT_LEFT - (0.0005 * (180 - angle_to_rotate) / 90));
+			return;
+		}
 	}
-	else if(mode == 'r')
-	{
-		gyro_rotation_speed = (gyro_data - GYRO_OFFSET) * GYRO_CONSTANT;
-	}
+	gyro_rotation_speed = 0;
 }
 
 void Angle_calculation()
 {
-	float delta_angle = gyro_rotation_speed * iteration_time * 100;
+	uint16_t delta_angle = round(gyro_rotation_speed * iteration_time * 100);
 	angle += delta_angle;
 }
 
@@ -197,7 +204,8 @@ bool Standing_still() // Returns true if the robot is standing still
 		wheel_sensor_counter = 0;
 		standing_still_counter = 0;
 		mode_complete = true;
-		first_detection = false;
+		distance_until_stop = 0;
+		travel_distance = 0;
 		
 		angle = 0;
 		angle_to_rotate = 0;

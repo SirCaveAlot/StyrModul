@@ -30,9 +30,9 @@ float error_current_left;
 uint8_t proportional_gain_both = 10;
 uint8_t proportional_gain_right = 20;
 uint8_t proportional_gain_left = 20;
-float derivative_gain_both = 1.8;
-float derivative_gain_right = 3.6;
-float derivative_gain_left = 3.6;
+float derivative_gain_both = 1.6;
+float derivative_gain_right = 3.2;
+float derivative_gain_left = 3.2;
 //
 float error_prior_speed;
 float error_current_speed;
@@ -80,7 +80,7 @@ float Steer_signal_both() //steersignal when both sides detectable
 float Steer_signal_right() //steersignal when right side detectable
 {
 	error_prior_right = error_current_right;
-	error_current_right = right_distance - 100; // Control using mm
+	error_current_right = right_distance - 90; // Control using mm
 	float steer_signal_right = proportional_gain_right*error_current_right + derivative_gain_right*(error_current_right - error_prior_right)*(1/iteration_time);
 	return steer_signal_right;
 }
@@ -88,7 +88,7 @@ float Steer_signal_right() //steersignal when right side detectable
 float Steer_signal_left() //steersignal when left side detectable
 {
 	error_prior_left = error_current_left;
-	error_current_left = left_distance - 100; // Control using mm
+	error_current_left = left_distance - 90; // Control using mm
 	float steer_signal_left = proportional_gain_left*error_current_left + derivative_gain_left*(error_current_left - error_prior_left)*(1/iteration_time);
 	return steer_signal_left;
 }
@@ -127,12 +127,6 @@ void Hallway_control(bool forward)
 	{
 		OCR1A = MAX_SPEED * ICR1;
 		OCR1B = MAX_SPEED * ICR1;
-	}
-	else if(competition_mode == 1 && mode == 'f' && turn_around)
-	{
-		OCR1A = MAX_SPEED * ICR1;
-		OCR1B = MAX_SPEED * ICR1;
-		turn_around = false;
 	}
 	else if(!right_side_detected && left_side_detected)
 	{
@@ -275,19 +269,38 @@ void Rotation_control(bool right) //rotates robot
 	}
 	
 	update_control = false;
-	float set_speed = Set_speed();
+	//int16_t delta_angle = angle_to_rotate - angle;
 	
-	if(right)
+/*	float set_speed = Set_speed();*/
+	if(angle < angle_to_rotate)
 	{
-		PORTA = (0 << PORTA0) | (1 << PORTA1);
-		OCR1A = set_speed * ICR1;
-		OCR1B = set_speed * ICR1;
+		if(right)
+		{
+			PORTA = (0 << PORTA0) | (1 << PORTA1);
+			OCR1A = MAX_SPEED * ICR1;
+			OCR1B = MAX_SPEED * ICR1;
+		}
+		else
+		{
+			PORTA = (1 << PORTA0) | (0 << PORTA1);
+			OCR1A = MAX_SPEED * ICR1;
+			OCR1B = MAX_SPEED * ICR1;
+		}
 	}
 	else
 	{
-		PORTA = (1 << PORTA0) | (0 << PORTA1);
-		OCR1A = set_speed * ICR1;
-		OCR1B = set_speed * ICR1;
+		if(right)
+		{
+			PORTA = (0 << PORTA0) | (1 << PORTA1);
+			OCR1A = 0;
+			OCR1B = 0;
+		}
+		else
+		{
+			PORTA = (1 << PORTA0) | (0 << PORTA1);
+			OCR1A = 0;
+			OCR1B = 0;
+		}
 	}
 }
 
@@ -353,25 +366,34 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 	}
 	else if(competition_mode == 1)
 	{
-		if(forward_IR_detected && mode == 'f')
+		if(forward_IR_detected /*&& mode == 'f' */&& !turn_around)
 		{
 			delta_distance = forward_IR_distance - 1000;
 		}
-		else if(mode == 'f' && right_side_detected)
+		else if(right_side_detected/* && mode == 'f'*/)
 		{
 			if(first_detection)
 			{
-				distance_until_stop = travel_distance + 2000;
+				distance_until_stop = travel_distance + 2300;
 				first_detection = false;
 			}
 			
-			if(last_mode == 'l')
+			if(turn_around)
 			{
 				Set_distance_until_stop(15);
+				turn_around = false;
 			}
 			
 			delta_distance = distance_until_stop - travel_distance;
 		}
+// 		else if(!right_side_detected && mode == 'f')
+// 		{
+// 			if(last_mode == 'l')
+// 			{
+// 				Set_distance_until_stop(15);
+// 			}
+// 			delta_distance = distance_until_stop - travel_distance;
+// 		}
 		else
 		{
 			delta_distance = distance_until_stop - travel_distance;
@@ -408,7 +430,7 @@ float Correct_to_center_of_tile()
 {
 	if(forward_IR_detected && mode == 'f')
 	{
-		if(forward_IR_distance > 1150)
+		if(forward_IR_distance > 1300)
 		{
 			Direction(true);
 			return 0.2;

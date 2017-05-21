@@ -204,6 +204,7 @@ void Dequeue_UART_queue()
 				else if((second_byte == 'l') || (second_byte == 'r'))
 				{
 					mode_complete = false;
+					angle = 0;
 					Set_angle_to_rotate(data);
 					Set_rotation_distance(data);
 				}

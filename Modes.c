@@ -56,9 +56,12 @@ void Autonomous_mode()
 		Hallway_control(true);
 		if(Standing_still())
 		{
-			UART_transmission('d');
-			mode_complete = true;
 			mode = 's';
+			last_mode = 'f';
+			mode_complete = true;
+			wheel_sensor_counter = 0;
+			UART_transmission('d');
+			
 		}
 		break;
 		
@@ -66,9 +69,10 @@ void Autonomous_mode()
 		Hallway_control(false);
 		if(Standing_still())
 		{
-			UART_transmission('d');
-			mode_complete = true;
 			mode = 's';
+			last_mode = 'b';
+			mode_complete = true;
+			UART_transmission('d');
 		}
 		break;
 		
@@ -82,14 +86,14 @@ void Autonomous_mode()
 		Rotation_control(true);
 		if(Standing_still())
 		{
-			last_mode = 'r';
-			UART_transmission('d');
-			mode_complete = true;
 			mode = 's';
+			last_mode = 'r';
+			mode_complete = true;
 			after_right_turn = true;
 			angle = 0;
 			angle_to_rotate = 0;
 			wheel_sensor_counter = 0;
+			UART_transmission('d');
 		}
 		break;
 		
@@ -98,13 +102,13 @@ void Autonomous_mode()
 		if(Standing_still())
 		{
 			last_mode = 'l';
-			UART_transmission('d');
  			mode_complete = true;
 			mode = 's';
 			angle = 0;
 			angle_to_rotate = 0;
 			wheel_sensor_counter = 0;
-			//standing_still_counter = 0;
+			standing_still_counter = 0;
+			UART_transmission('d');
 		}
 		break;
 		
@@ -143,11 +147,11 @@ void Manual_mode()
 		break;
 		
 		case 'l':
-		Rotate_counter_clockwise(0.9, 0.9);
+		Rotate_counter_clockwise(0.5, 0.5);
 		break;
 		
 		case 'r':
-		Rotate_clockwise(0.9, 0.9);
+		Rotate_clockwise(0.5, 0.5);
 		break;
 		
 		case 's':

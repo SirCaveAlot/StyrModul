@@ -89,7 +89,7 @@ int main(void)
 //  	UART_queue_put('A');
 //  	UART_queue_put(0);
 // 	UART_queue_put(0);
-// 	UART_queue_put('r');
+// 	UART_queue_put('l');
 // 	UART_queue_put(90);
 //  	Dequeue_UART_queue();
 	
@@ -98,6 +98,13 @@ int main(void)
 	
 	while(1)
 	{
+// 		if(mode == 's')
+// 		{
+// 			UART_queue_put(0);
+// 			UART_queue_put('l');
+// 			UART_queue_put(90);
+// 		}
+		
 		Dequeue_UART_queue(); // Load UART data from communication module.
 		Dequeue_SPI_queue(); // Load Sensor values from queue.
 		Mode_loop();
@@ -109,17 +116,22 @@ int main(void)
 		{
 			PORTA |= (1 << 6);
 		}
-		else if(competition_mode == 3)
-		{
-			PORTA |= (1 << 7);
-		}
-		if(right_side_detected)
+		
+		if(left_side_detected)
 		{
 			PORTA |= 0b10000000;
 		}
 		else
 		{
-			PORTA &= 0b00101111;
+			PORTA &= 0b01101111;
+		}
+		if(right_side_detected)
+		{
+			//PORTA |= 0b10000000;
+		}
+		else
+		{
+			PORTA &= 0b11101111;
 		}
 	}
 }
