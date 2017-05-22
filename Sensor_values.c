@@ -27,7 +27,8 @@
 #define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
 
 int left_distance;
-int right_distance;
+int front_right_distance;
+int back_right_distance;
 int forward_IR_distance;
 bool left_side_detected;
 bool right_side_detected;
@@ -65,8 +66,12 @@ void IR_conversion(char direction, uint8_t IR_value)
 	uint16_t distance = round(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
 	if(direction == 'r')
 	{
-		right_distance = distance;
+		front_right_distance = distance;
 		Right_side_detectable();
+	}
+	else if(direction == 'b')
+	{
+		back_right_distance = distance;
 	}
 	else if(direction == 'l')
 	{
@@ -83,7 +88,7 @@ void IR_conversion(char direction, uint8_t IR_value)
 
 void Left_side_detectable()
 {
-	if(left_distance > 200)
+	if(left_distance > 250)
 	{
 		left_side_detected = false;
 	}
@@ -95,7 +100,7 @@ void Left_side_detectable()
 
 void Right_side_detectable()
 {
-	if(right_distance > 200)
+	if(front_right_distance > 250)
 	{
 		right_side_detected = false;
 	}
@@ -115,7 +120,7 @@ void Right_side_detectable()
 
 void Forward_IR_detectable()
 {
-	if(forward_IR_distance > 2000)
+	if(forward_IR_distance > 2500)
 	{
 		forward_IR_detected = false;
 	}
@@ -129,7 +134,7 @@ void Forward_IR_detectable()
 
 void Gyro_calculation(uint16_t gyro_data)
 {
-	if(gyro_data > 1400 || gyro_data < 1000)
+	if(gyro_data > 1260 || gyro_data < 1200)
 	{
 		if(mode == 'r')
 		{
@@ -198,18 +203,22 @@ void Calculate_wheel_sensor_counter(uint8_t data) //Calculates the wheel sensor 
 
 bool Standing_still() // Returns true if the robot is standing still
 {
-	if(standing_still_counter > 30)
+	if(standing_still_counter > 20)
 	{
-		last_mode = mode;
-		wheel_sensor_counter = 0;
-		standing_still_counter = 0;
-		mode_complete = true;
-		distance_until_stop = 0;
-		travel_distance = 0;
-		
-		angle = 0;
-		angle_to_rotate = 0;
-		return true;
+		if(Correct_angle_to_wall())
+		{
+			last_mode = mode;
+			wheel_sensor_counter = 0;
+			standing_still_counter = 0;
+			mode_complete = true;
+			distance_until_stop = 0;
+			travel_distance = 0;
+			
+			angle = 0;
+			angle_to_rotate = 0;
+			return true;
+		}
+		return false;
 	}
 	return false;
 }

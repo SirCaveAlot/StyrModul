@@ -35,6 +35,8 @@ void Right_side_detected_again();
 
 float Correct_to_center_of_tile();
 
+bool Correct_angle_to_wall();
+
 void Speed_test();
 
 extern bool update_control;

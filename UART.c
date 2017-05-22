@@ -189,6 +189,7 @@ void Dequeue_UART_queue()
 				UART_queue_get(&data);
 				if(data == 180)
 				{
+					data = 190;
 					turn_around = true;
 				}
 				else

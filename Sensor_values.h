@@ -11,7 +11,8 @@
 #define SENSOR_VALUES_H_
 
 extern int left_distance;
-extern int right_distance;
+extern int front_right_distance;
+extern int back_right_distance;
 extern int forward_IR_distance;
 extern bool right_side_detected;
 extern bool left_side_detected;

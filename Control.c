@@ -72,7 +72,7 @@ bool after_right_turn;
 float Steer_signal_both() //steersignal when both sides detectable
 {
 	error_prior_both = error_current_both;
-	error_current_both = right_distance - left_distance;
+	error_current_both = front_right_distance - left_distance;
 	float steer_signal_both = proportional_gain_both*error_current_both + derivative_gain_both*(error_current_both - error_prior_both)*(1/iteration_time);
 	return steer_signal_both;
 }
@@ -80,7 +80,7 @@ float Steer_signal_both() //steersignal when both sides detectable
 float Steer_signal_right() //steersignal when right side detectable
 {
 	error_prior_right = error_current_right;
-	error_current_right = right_distance - 90; // Control using mm
+	error_current_right = front_right_distance - 100; // Control using mm
 	float steer_signal_right = proportional_gain_right*error_current_right + derivative_gain_right*(error_current_right - error_prior_right)*(1/iteration_time);
 	return steer_signal_right;
 }
@@ -88,7 +88,7 @@ float Steer_signal_right() //steersignal when right side detectable
 float Steer_signal_left() //steersignal when left side detectable
 {
 	error_prior_left = error_current_left;
-	error_current_left = left_distance - 90; // Control using mm
+	error_current_left = left_distance - 100; // Control using mm
 	float steer_signal_left = proportional_gain_left*error_current_left + derivative_gain_left*(error_current_left - error_prior_left)*(1/iteration_time);
 	return steer_signal_left;
 }
@@ -289,18 +289,8 @@ void Rotation_control(bool right) //rotates robot
 	}
 	else
 	{
-		if(right)
-		{
-			PORTA = (0 << PORTA0) | (1 << PORTA1);
-			OCR1A = 0;
-			OCR1B = 0;
-		}
-		else
-		{
-			PORTA = (1 << PORTA0) | (0 << PORTA1);
-			OCR1A = 0;
-			OCR1B = 0;
-		}
+		OCR1A = 0;
+		OCR1B = 0;
 	}
 }
 
@@ -312,12 +302,12 @@ float Correct_angle_from_gyro()
 		if(delta_angle < 300)
 		{
 			PORTA = (1 << PORTA0) | (0 << PORTA1); // If the robot has rotated to much, rotate back
-			return 0.2;
+			return 0.3;
 		}
 		else if(delta_angle > 600)
 		{
 			PORTA = (0 << PORTA0) | (1 << PORTA1); // If the robot hasn't rotated enough, rotate more
-			return 0.2;
+			return 0.3;
 		}
 		else
 		{
@@ -329,12 +319,12 @@ float Correct_angle_from_gyro()
 		if(delta_angle < 300)
 		{
 			PORTA = (0 << PORTA0) | (1 << PORTA1); // If the robot has rotated to much, rotate back
-			return 0.2;
+			return 0.3;
 		}
 		else if(delta_angle > 600)
 		{
 			PORTA = (1 << PORTA0) | (0 << PORTA1); // If the robot hasn't rotated enough, rotate more
-			return 0.2;
+			return 0.3;
 		}
 		else
 		{
@@ -374,7 +364,7 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 		{
 			if(first_detection)
 			{
-				distance_until_stop = travel_distance + 2300;
+				distance_until_stop = travel_distance + 1900;
 				first_detection = false;
 			}
 			
@@ -386,63 +376,79 @@ float Set_speed() //sets speed given distance to obstacle ahead and then stops
 			
 			delta_distance = distance_until_stop - travel_distance;
 		}
-// 		else if(!right_side_detected && mode == 'f')
-// 		{
-// 			if(last_mode == 'l')
-// 			{
-// 				Set_distance_until_stop(15);
-// 			}
-// 			delta_distance = distance_until_stop - travel_distance;
-// 		}
 		else
 		{
 			delta_distance = distance_until_stop - travel_distance;
 		}
 	}
-	
-//	if(mode == 'f' || mode == 'b')
-//	{
 		
-		if(delta_distance <= stop_distance)
-		{
-			return Correct_to_center_of_tile();
-		}
-		else
-		{
-			return MAX_SPEED;
-		}
-//	}
-// 	else if(mode == 'l' || mode == 'r')
-// 	{
-// 		if(delta_distance <= stop_distance)
-// 		{
-// 			return 0;//Correct_angle_from_gyro();
-// 		}
-// 		else
-// 		{
-// 			return MAX_SPEED;
-// 		}
-// 	}
-// 	return 0;
+	if(delta_distance <= stop_distance)
+	{
+		return Correct_to_center_of_tile();
+	}
+	else
+	{
+		return MAX_SPEED;
+	}
 }
 
 float Correct_to_center_of_tile()
 {
 	if(forward_IR_detected && mode == 'f')
 	{
-		if(forward_IR_distance > 1300)
+		if(forward_IR_distance > 1100)
 		{
 			Direction(true);
 			return 0.2;
 		}	
-		else if(forward_IR_distance < 850)
+		else if(forward_IR_distance < 900)
 		{
 			Direction(false);
 			return 0.2;
 		}
 	}
 	return 0;
+// 	if(Correct_angle_to_wall())
+// 	{
+// 		return 0;
+// 	}
+// 	else
+// 	{
+// 		return 0.3;
+// 	}
 }
+
+bool Correct_angle_to_wall()
+{
+	if(right_side_detected)
+	{
+		int16_t delta_right_distance = front_right_distance - back_right_distance;
+		if(delta_right_distance > 5) // If front_right_distance > back_right_distance then rotate clockwise
+		{
+			PORTA = (0 << PORTA0) | (1 << PORTA1); 
+			OCR1A = 0.2 * ICR1;
+			OCR1B = 0.2 * ICR1;
+			return false;
+		}
+		else if(delta_right_distance < -5) // If front_right_distance > back_right_distance then rotate clockwise
+		{
+			PORTA = (1 << PORTA0) | (0 << PORTA1);
+			OCR1A = 0.2 * ICR1;
+			OCR1B = 0.2 * ICR1;
+			return false;
+		}
+		else 
+		{
+			OCR1A = 0;
+			OCR1B = 0;
+			return true;
+		}
+	}
+	OCR1A = 0;
+	OCR1B = 0;
+	return true;
+}
+
 
 //----------------------------LIDAR control------------------------------------
 

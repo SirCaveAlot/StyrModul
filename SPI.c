@@ -111,7 +111,7 @@ void SPI_queue_remove()
 
 void Dequeue_SPI_queue()
 {		
-	if(SPI_queue_length < 13)
+	if(SPI_queue_length < 14)
 	{
 		dequeue = false;
 		return;
@@ -132,11 +132,13 @@ void Dequeue_SPI_queue()
 		SPI_queue_remove(); // Startbytes
 		SPI_queue_remove();
 		
-		SPI_queue_get(&IR_value); // IR right
+		SPI_queue_get(&IR_value); // IR right front
 		IR_conversion('r', IR_value);
+		SPI_queue_get(&IR_value); // IR right back
+		IR_conversion('b', IR_value);
 		SPI_queue_get(&IR_value); // IR left
 		IR_conversion('l', IR_value);
-		SPI_queue_get(&IR_value);
+		SPI_queue_get(&IR_value); // IR front
 		IR_conversion('f', IR_value);
 		
 		SPI_queue_remove(); // Right tape
