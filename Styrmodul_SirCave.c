@@ -125,7 +125,7 @@ int main(void)
 		{
 			PORTA &= 0b01101111;
 		}
-		if(right_side_detected)
+		if(front_right_side_detected)
 		{
 			//PORTA |= 0b10000000;
 		}

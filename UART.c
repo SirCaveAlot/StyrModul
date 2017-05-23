@@ -42,11 +42,18 @@ ISR(USART0_RX_vect)
  	volatile uint8_t data = UDR0;
 	if(data == 'B')
 	{
-		distance_until_stop = 1000;
+		distance_until_stop = 1300;
 		stop_distance = 550;
 		wheel_sensor_counter = 0;
 		mode_complete = false;
 		mode = 'b';
+	}
+	else if(data == 'F')
+	{
+		Set_distance_until_stop(15);
+		wheel_sensor_counter = 0;
+		mode_complete = false;
+		mode = 'f';
 	}
 	else
 	{
@@ -177,7 +184,20 @@ void Dequeue_UART_queue()
 			
 			if(second_byte == 'C')
 			{
-				competition_mode = 1;
+				Rotate_LIDAR(0.2);
+				if(competition_mode == 0)
+				{
+					competition_mode = 1;
+				}
+				else if(competition_mode == 1)
+				{
+					while(UART_queue_in != UART_queue_out)
+					{
+						UART_queue_remove();
+					}
+					competition_mode = 0;
+				}
+				
 				mode_complete = true;
 				UART_queue_remove();
 				return;
@@ -189,7 +209,7 @@ void Dequeue_UART_queue()
 				UART_queue_get(&data);
 				if(data == 180)
 				{
-					data = 190;
+					data = 230;
 					turn_around = true;
 				}
 				else

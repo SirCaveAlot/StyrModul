@@ -14,16 +14,17 @@ extern int left_distance;
 extern int front_right_distance;
 extern int back_right_distance;
 extern int forward_IR_distance;
-extern bool right_side_detected;
+extern bool front_right_side_detected;
+extern bool back_right_side_detected;
 extern bool left_side_detected;
 extern bool forward_IR_detected;
 extern int16_t angle;
 extern int16_t angle_to_rotate;
 extern int16_t gyro_rotation_speed;
-extern int32_t distance_until_stop;
-extern int32_t stop_distance;
+volatile extern int32_t distance_until_stop;
+volatile extern int32_t stop_distance;
 extern int32_t travel_distance;
-extern uint16_t wheel_sensor_counter;
+volatile extern uint16_t wheel_sensor_counter;
 extern uint8_t standing_still_counter;
 extern uint8_t velocity;
 extern uint8_t LIDAR_angle;
@@ -38,7 +39,11 @@ void IR_conversion(char, uint8_t);
 
 void Left_side_detectable();
 
-void Right_side_detectable();
+void Front_right_side_detectable();
+
+void Back_right_side_detectable();
+
+bool Right_side_detectable();
 
 void Forward_IR_detectable();
 

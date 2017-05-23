@@ -23,7 +23,7 @@
 #define WHEEL_SLICE (WHEEL_CIRCUMFERENCE/16)
 #define GYRO_OFFSET 1230
 #define GYRO_CONSTANT_RIGHT 0.353 //0.366748166259168704156479
-#define GYRO_CONSTANT_LEFT 0.375
+#define GYRO_CONSTANT_LEFT 0.365
 #define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
 
 int left_distance;
@@ -31,18 +31,20 @@ int front_right_distance;
 int back_right_distance;
 int forward_IR_distance;
 bool left_side_detected;
-bool right_side_detected;
+bool front_right_side_detected;
+bool back_right_side_detected;
 bool forward_IR_detected;
 
 int16_t angle;
 int16_t angle_to_rotate;
 int16_t gyro_rotation_speed;
 
-int32_t distance_until_stop;
-int32_t stop_distance;
+volatile int32_t distance_until_stop;
+volatile int32_t stop_distance;
 int32_t travel_distance;
-uint16_t wheel_sensor_counter;
+volatile uint16_t wheel_sensor_counter;
 uint8_t standing_still_counter;
+uint8_t correct_angle_counter;
 uint8_t velocity;
 uint8_t LIDAR_angle;
 uint8_t LIDAR_rotation_speed;
@@ -64,14 +66,16 @@ uint16_t LIDAR_array[2] = {0, 0};
 void IR_conversion(char direction, uint8_t IR_value)
 {
 	uint16_t distance = round(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
+	
 	if(direction == 'r')
 	{
 		front_right_distance = distance;
-		Right_side_detectable();
+		Front_right_side_detectable();
 	}
 	else if(direction == 'b')
 	{
 		back_right_distance = distance;
+		Back_right_side_detectable();
 	}
 	else if(direction == 'l')
 	{
@@ -88,7 +92,7 @@ void IR_conversion(char direction, uint8_t IR_value)
 
 void Left_side_detectable()
 {
-	if(left_distance > 250)
+	if(left_distance > 200)
 	{
 		left_side_detected = false;
 	}
@@ -98,29 +102,51 @@ void Left_side_detectable()
 	}
 }
 
-void Right_side_detectable()
+void Front_right_side_detectable()
 {
-	if(front_right_distance > 250)
+	if(front_right_distance > 200)
 	{
-		right_side_detected = false;
+		front_right_side_detected = false;
 	}
 	else
 	{
-		right_side_detected = true;
-		if(mode == 'f' && !first_detection)
+		front_right_side_detected = true;
+		
+		if(mode == 'f' && !first_detection && Right_side_detectable())
 		{
 			first_detection = true;
 		}
-		if(after_right_turn)
+		if(after_right_turn && Right_side_detectable())
 		{
 			after_right_turn = false;
 		}
 	}
 }
 
+void Back_right_side_detectable()
+{
+	if(back_right_distance > 200)
+	{
+		back_right_side_detected = false;
+	}
+	else
+	{
+		back_right_side_detected = true;
+	}
+}
+
+bool Right_side_detectable()
+{
+	if(front_right_side_detected && back_right_side_detected)
+	{
+		return true;
+	}
+	return false;
+}
+
 void Forward_IR_detectable()
 {
-	if(forward_IR_distance > 2500)
+	if(forward_IR_distance > 2000)
 	{
 		forward_IR_detected = false;
 	}
@@ -134,7 +160,7 @@ void Forward_IR_detectable()
 
 void Gyro_calculation(uint16_t gyro_data)
 {
-	if(gyro_data > 1260 || gyro_data < 1200)
+	if(gyro_data > 1310 || gyro_data < 1150)
 	{
 		if(mode == 'r')
 		{
@@ -152,7 +178,7 @@ void Gyro_calculation(uint16_t gyro_data)
 
 void Angle_calculation()
 {
-	uint16_t delta_angle = round(gyro_rotation_speed * iteration_time * 100);
+	int16_t delta_angle = round(gyro_rotation_speed * iteration_time * 100);
 	angle += delta_angle;
 }
 
@@ -205,20 +231,21 @@ bool Standing_still() // Returns true if the robot is standing still
 {
 	if(standing_still_counter > 20)
 	{
-		if(Correct_angle_to_wall())
-		{
-			last_mode = mode;
-			wheel_sensor_counter = 0;
-			standing_still_counter = 0;
-			mode_complete = true;
-			distance_until_stop = 0;
-			travel_distance = 0;
-			
-			angle = 0;
-			angle_to_rotate = 0;
-			return true;
-		}
-		return false;
+		return true;
+// 		if(Correct_angle_to_wall())
+// 		{
+// 			last_mode = mode;
+// 			wheel_sensor_counter = 0;
+// 			standing_still_counter = 0;
+// 			mode_complete = true;
+// 			distance_until_stop = 0;
+// 			travel_distance = 0;
+// 			
+// 			angle = 0;
+// 			angle_to_rotate = 0;
+// 			return true;
+// 		}
+// 		return false;
 	}
 	return false;
 }
@@ -227,7 +254,7 @@ bool Standing_still() // Returns true if the robot is standing still
 
 void Line_detection(uint8_t tape_data)
 {
-	if(tape_data > 200)
+	if(tape_data == 1)
 	{
 		line_detected = true;
 	}

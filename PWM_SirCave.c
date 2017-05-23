@@ -67,7 +67,6 @@ void Rotate_counter_clockwise(float velocity_left, float velocity_right)
 	Set_speed_right(velocity_right); // velocity_right on right side
 }
 
-
 //--------------------Grip arm-----------------------------
 
 void Timer2_init()

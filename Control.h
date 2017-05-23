@@ -37,6 +37,8 @@ float Correct_to_center_of_tile();
 
 bool Correct_angle_to_wall();
 
+void Straighten_up_robot();
+
 void Speed_test();
 
 extern bool update_control;

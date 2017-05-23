@@ -15,11 +15,11 @@ void Autonomous_mode();
 
 void Manual_mode();
 
-extern uint8_t mode;
+volatile extern uint8_t mode;
 extern uint8_t last_mode;
 extern uint8_t competition_mode;
 extern bool autonomous;
-extern bool mode_complete;
+volatile extern bool mode_complete;
 extern bool turn_around;
 
 #endif /* MODES_H_ */

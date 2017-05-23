@@ -19,12 +19,12 @@
 #include "Control.h"
 #include "PWM_SirCave.h"
 
-uint8_t mode;
+volatile uint8_t mode;
 uint8_t last_mode;
 uint8_t competition_mode;
 bool change_competition_mode;
 bool autonomous;
-bool mode_complete;
+volatile bool mode_complete;
 bool turn_around;
 
 void Mode_loop()
@@ -41,27 +41,52 @@ void Mode_loop()
 
 void Autonomous_mode()
 {
-// 	if(line_detected)
-// 	{
-// 		mode = 's';
-// 		UART_transmission('t');
-// 		line_detected = false;
-// 		mode_complete = true;
-// 		return;
-// 	}
+	if(line_detected && (mode != 'b' || mode != 's'))
+	{
+		if(competition_mode == 1)
+		{
+			mode = 's';
+			UART_transmission('t');
+			line_detected = false;
+			mode_complete = true;
+			return;
+		}
+		else if(competition_mode == 0)
+		{
+			distance_until_stop = 2800;
+		}
+	}
 
 	switch(mode)
 	{
-		case 'f':
+		case 'f':		
 		Hallway_control(true);
+		if(UART_queue_peek(UART_queue_out + 1) == 'f')
+		{
+			UART_queue_remove();
+			UART_queue_remove();
+			UART_queue_remove();
+		}
 		if(Standing_still())
 		{
-			mode = 's';
-			last_mode = 'f';
-			mode_complete = true;
-			wheel_sensor_counter = 0;
-			UART_transmission('d');
-			
+			if(Correct_angle_to_wall())
+			{
+				mode = 's';
+				last_mode = 'f';
+				mode_complete = true;
+				wheel_sensor_counter = 0;
+				travel_distance = 0;
+				distance_until_stop = 0;
+				angle = 0;
+				angle_to_rotate = 0;
+				UART_transmission('d');
+			}
+			else
+			{
+				mode = 'C';
+				last_mode = 'f';
+				standing_still_counter = 0;
+			}
 		}
 		break;
 		
@@ -69,10 +94,24 @@ void Autonomous_mode()
 		Hallway_control(false);
 		if(Standing_still())
 		{
-			mode = 's';
-			last_mode = 'b';
-			mode_complete = true;
-			UART_transmission('d');
+			if(Correct_angle_to_wall())
+			{
+				mode = 's';
+				last_mode = 'b';
+				mode_complete = true;
+				wheel_sensor_counter = 0;
+				travel_distance = 0;
+				distance_until_stop = 0;
+				angle = 0;
+				angle_to_rotate = 0;
+				UART_transmission('d');
+			}
+			else
+			{
+				mode = 'C';
+				last_mode = 'b';
+				standing_still_counter = 0;
+			}
 		}
 		break;
 		
@@ -84,26 +123,85 @@ void Autonomous_mode()
 		
 		case 'r':
 		Rotation_control(true);
+		if(UART_queue_peek(UART_queue_out + 1) == 'r')
+		{
+			UART_queue_remove();
+			UART_queue_remove();
+			UART_queue_remove();
+		}
 		if(Standing_still())
 		{
-			mode = 's';
-			last_mode = 'r';
-			mode_complete = true;
-			after_right_turn = true;
-			angle = 0;
-			angle_to_rotate = 0;
-			wheel_sensor_counter = 0;
-			UART_transmission('d');
+			if(Correct_angle_to_wall())
+			{
+				mode = 's';
+				last_mode = 'r';
+				mode_complete = true;
+				after_right_turn = true;
+				wheel_sensor_counter = 0;
+				travel_distance = 0;
+				distance_until_stop = 0;
+				angle = 0;
+				angle_to_rotate = 0;
+				UART_transmission('d');
+			}
+			else
+			{
+				mode = 'C';
+				last_mode = 'r';
+				standing_still_counter = 0;
+			}
 		}
 		break;
 		
 		case 'l':
 		Rotation_control(false);
+		if(UART_queue_peek(UART_queue_out + 1) == 'l')
+		{
+			UART_queue_remove();
+			UART_queue_remove();
+			UART_queue_remove();
+		}
 		if(Standing_still())
 		{
-			last_mode = 'l';
- 			mode_complete = true;
+			if(Correct_angle_to_wall())
+			{
+				if(last_mode == 'b')
+				{
+					first_detection = false;
+					after_right_turn = true;
+				}
+				mode = 's';
+				last_mode = 'l';
+				mode_complete = true;
+				travel_distance = 0;
+				distance_until_stop = 0;
+				angle = 0;
+				angle_to_rotate = 0;
+				wheel_sensor_counter = 0;
+				standing_still_counter = 0;
+				UART_transmission('d');
+			}
+			else
+			{
+				mode = 'C';
+				last_mode = 'l';
+				standing_still_counter = 0;
+			}
+		}
+		break;
+		
+		case 'C':
+		Straighten_up_robot();
+		if(Standing_still())
+		{
+			if(last_mode == 'r')
+			{
+				after_right_turn = true;
+			}
+			mode_complete = true;
 			mode = 's';
+			travel_distance = 0;
+			distance_until_stop = 0;
 			angle = 0;
 			angle_to_rotate = 0;
 			wheel_sensor_counter = 0;
@@ -152,6 +250,14 @@ void Manual_mode()
 		
 		case 'r':
 		Rotate_clockwise(0.5, 0.5);
+		break;
+		
+		case 'O':
+		Drive_forward(0.8, 0.5);
+		break;
+		
+		case 'P':
+		Drive_forward(0.5, 0.8);
 		break;
 		
 		case 's':

@@ -30,5 +30,6 @@ void Test_UART_queue();
 extern uint8_t UART_queue_length;
 
 extern uint8_t UART_queue_out;
+extern uint8_t UART_queue_in;
 
 #endif
