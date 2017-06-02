@@ -1,8 +1,8 @@
 /*
  * Modes.c
  *
- * Created: 2017-05-05 16:48:15
- *  Author: Deep
+ * Created: 2017-05-05
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 #define F_CPU 14745600UL
@@ -19,14 +19,19 @@
 #include "Control.h"
 #include "PWM_SirCave.h"
 
+//---------------------------Mode parameters-----------------------------------
+
 volatile uint8_t mode;
 uint8_t last_mode;
-uint8_t competition_mode;
+bool competition_mode;
 bool change_competition_mode;
 bool autonomous;
 volatile bool mode_complete;
 bool turn_around;
+bool adjust_angle = false;
 
+// This is the headloop for all the modes. It loops through the modes depending
+// if the system is controlled autonomically or manually.  
 void Mode_loop()
 {
 	if(autonomous) // Autonomous mode
@@ -41,34 +46,35 @@ void Mode_loop()
 
 void Autonomous_mode()
 {
-	if(line_detected && (mode != 'b' || mode != 's'))
+	// If a line is detected.
+	if(line_detected && mode != 'b' && mode != 's')
 	{
-		if(competition_mode == 1)
+		// If in mapping stage, the robot will stop as a line is detected.
+		if(competition_mode)
 		{
 			mode = 's';
-			UART_transmission('t');
 			line_detected = false;
 			mode_complete = true;
-			return;
 		}
-		else if(competition_mode == 0)
-		{
-			distance_until_stop = 2800;
-		}
+		
+		UART_transmission('t'); // A 't' is sent to the communication module.
 	}
-
+	
 	switch(mode)
 	{
-		case 'f':		
+		case 'f':
+		// If mode == 'f', the robot uses Hallway_control until it is parallel
+		// to the walls to the sides and is standing still. A 'd' is then sent
+		// to the communication module as a request of a new steering mode.
+		 
 		Hallway_control(true);
-		if(UART_queue_peek(UART_queue_out + 1) == 'f')
-		{
-			UART_queue_remove();
-			UART_queue_remove();
-			UART_queue_remove();
-		}
+		
 		if(Standing_still())
 		{
+			// If the robot has the correct angle to the walls and it is 
+			// standing still, then parameters is reseted, the modes is set to 
+			// 's' and a 'd' is sent to the communication module.
+			 
 			if(Correct_angle_to_wall())
 			{
 				mode = 's';
@@ -81,6 +87,8 @@ void Autonomous_mode()
 				angle_to_rotate = 0;
 				UART_transmission('d');
 			}
+			
+			// If the angle to the sides isn't correct, the mode is set to 'C'.
 			else
 			{
 				mode = 'C';
@@ -91,6 +99,7 @@ void Autonomous_mode()
 		break;
 		
 		case 'b':
+		// Same as mode == 'f' but the direction is backwards.
 		Hallway_control(false);
 		if(Standing_still())
 		{
@@ -116,21 +125,27 @@ void Autonomous_mode()
 		break;
 		
 		case 's':
+		// The case where the robot stands still. Parameters is set to 0
+		// and Stop_motors() is made.
 		Stop_motors();
 		mode_complete = true;
 		standing_still_counter = 0;
+		wheel_sensor_counter = 0;
+		travel_distance = 0;
+		distance_until_stop = 0;
+		angle = 0;
+		angle_to_rotate = 0;
 		break;
 		
 		case 'r':
+		// Rotates clockwise using Rotation_control. 
 		Rotation_control(true);
-		if(UART_queue_peek(UART_queue_out + 1) == 'r')
-		{
-			UART_queue_remove();
-			UART_queue_remove();
-			UART_queue_remove();
-		}
 		if(Standing_still())
 		{
+			// If the robot has the correct angle to the walls and it is
+			// standing still, then parameters is reseted, the modes is set to
+			// 's' and a 'd' is sent to the communication module.
+			
 			if(Correct_angle_to_wall())
 			{
 				mode = 's';
@@ -144,6 +159,8 @@ void Autonomous_mode()
 				angle_to_rotate = 0;
 				UART_transmission('d');
 			}
+			
+			// If the angle to the sides isn't correct, the mode is set to 'C'.
 			else
 			{
 				mode = 'C';
@@ -154,6 +171,7 @@ void Autonomous_mode()
 		break;
 		
 		case 'l':
+		// Same as mode == 'r', but rotates counter clockwise.
 		Rotation_control(false);
 		if(UART_queue_peek(UART_queue_out + 1) == 'l')
 		{
@@ -191,6 +209,9 @@ void Autonomous_mode()
 		break;
 		
 		case 'C':
+		// The mode where the robot corrects its angle to the walls.
+		// When the robot is standing still, parameters is reseted, mode is set 
+		// to 's' and a 'd' is sent to the communication module.
 		Straighten_up_robot();
 		if(Standing_still())
 		{
@@ -211,27 +232,36 @@ void Autonomous_mode()
 		break;
 		
 		case 'L':
+		// Rotates the LIDAR.
 		Rotate_LIDAR(0.2);
 		break;
 		
 		case 'S':
+		// Stops the LIDAR.
 		Stop_LIDAR();
 		break;
 		
 		case 'o':
+		// Opens the grip arm.
 		Open_grip_arm();
+		mode = 's';
 		break;
 		
 		case 'c':
+		// Close the grip arm.
 		Close_grip_arm();
+		mode = 's';
 		break;
 		
 		case 'm':
+		// Center the grip arm.
 		Center_grip_arm();
+		mode = 's';
 		break;
 	}		
 }
 
+// If the system is controlled manually, these are the cases used.
 void Manual_mode()
 {
 	switch(mode)

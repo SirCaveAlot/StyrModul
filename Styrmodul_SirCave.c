@@ -1,8 +1,8 @@
 /*
  * Styrmodul_SirCave.c
  *
- * Created: 4/3/2017 1:51:03 PM
- *  Author: gusst967
+ * Created: 4/3/2017
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 #define F_CPU 14745600UL
@@ -19,6 +19,7 @@
 #include "Sensor_values.h"
 #include "Modes.h"
 
+//-----------------------------Definitions-------------------------------------
 #define clkspd 14745600
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
@@ -37,7 +38,8 @@ void Test_set_speed()
 	update_control = false; 
 }
 
-
+// A small simulation where the robot drives in a squared course of
+// 3x3 modules.
 void Course_simulation()
 {
 	if(mode == 's')
@@ -61,9 +63,10 @@ void Course_simulation()
 	}
 }
 
-
+// The main function of the steering module.
 int main(void)
 {	
+	// All initializations.	
 	Timer1_init();
 	Timer2_init();
 	USART_Init(UBBR);
@@ -75,63 +78,19 @@ int main(void)
 	autonomous = false;
 	mode_complete = true; 
 	line_detected = false;
-//	last_movement = 'r';
 	mode = 's';
-	competition_mode = 0;
+	competition_mode = false;
 	distance_until_stop = 0;
 	travel_distance = 0;
 	first_detection = false;
 	after_right_turn = false;
 	turn_around = false;
-	
-
-// 	UART_queue_put(0);
-//  	UART_queue_put('A');
-//  	UART_queue_put(0);
-// 	UART_queue_put(0);
-// 	UART_queue_put('l');
-// 	UART_queue_put(90);
-//  	Dequeue_UART_queue();
-	
-	//Test_UART_queue();
 	sei();
 	
 	while(1)
 	{
-// 		if(mode == 's')
-// 		{
-// 			UART_queue_put(0);
-// 			UART_queue_put('l');
-// 			UART_queue_put(90);
-// 		}
-		
 		Dequeue_UART_queue(); // Load UART data from communication module.
-		Dequeue_SPI_queue(); // Load Sensor values from queue.
+		Dequeue_SPI_queue(); // Load sensor values from SPI queue.
 		Mode_loop();
-		if(competition_mode == 1)
-		{
-			PORTA |= (1 << 5);
-		}
-		else if(competition_mode == 2)
-		{
-			PORTA |= (1 << 6);
-		}
-		
-		if(left_side_detected)
-		{
-			PORTA |= 0b10000000;
-		}
-		else
-		{
-			PORTA &= 0b01101111;
-		}
-		if(front_right_side_detected)
-		{
-			//PORTA |= 0b10000000;
-		}
-		else
-		{
-			PORTA &= 0b11101111;
-		}
 	}
 }

@@ -1,8 +1,9 @@
 ﻿/*
  * Control.h
  *
- * Created: 4/25/2017 2:13:30 PM
- *  Author: gusst967
+ * Created: 4/19/2017 
+ * Author: Gustav Strandberg, gusst967
+		   Gustaf Westerholm, guswe541
  */ 
 
 
@@ -27,19 +28,13 @@ void Hallway_control_right();
 
 void Rotation_control(bool);
 
-float Correct_angle_from_gyro();
-
 float Set_speed();
-
-void Right_side_detected_again();
 
 float Correct_to_center_of_tile();
 
 bool Correct_angle_to_wall();
 
 void Straighten_up_robot();
-
-void Speed_test();
 
 extern bool update_control;
 extern bool after_right_turn;

@@ -1,8 +1,8 @@
 /*
  * Modes.h
  *
- * Created: 2017-05-05 16:51:46
- *  Author: Deep
+ * Created: 2017-05-05
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 
@@ -17,7 +17,7 @@ void Manual_mode();
 
 volatile extern uint8_t mode;
 extern uint8_t last_mode;
-extern uint8_t competition_mode;
+extern bool competition_mode;
 extern bool autonomous;
 volatile extern bool mode_complete;
 extern bool turn_around;

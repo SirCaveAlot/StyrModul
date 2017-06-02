@@ -2,7 +2,7 @@
 //  * UART.c
 //  *
 //  * Created: 3/31/2017 2:22:01 PM
-//  *  Author: gusst967
+//  * Author: Gustav Strandberg, gusst967
 //  */ 
 
 #define F_CPU 14745600UL
@@ -19,41 +19,64 @@
 #include "Modes.h"
 
 
-//----------------Global variables-----------------------
+//----------------------------Global variables---------------------------------
 
 #define clkspd 14745600
 #define BAUD 115200
 #define UBBR clkspd/16/BAUD-1
 
-// Data for transmission
+//-----------------------------Queue structure---------------------------------
 
-/* Queue structure */
+/* Very simple queue
+ * These are FIFO queues which discard the new data when full.
+ *
+ * Queue is empty when in == out.
+ * If in != out, then 
+ *  - items are placed into in before incrementing in
+ *  - items are removed from out before incrementing out
+ * Queue is full when in == (out-1 + QUEUE_SIZE) % QUEUE_SIZE;
+ *
+ * The queue will hold QUEUE_ELEMENTS number of items before the
+ * calls to QueuePut fail.
+ */
+
 #define UART_QUEUE_ELEMENTS 25
-#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1) // maximum of element is QUEUE_ELEMENTS
+#define UART_QUEUE_SIZE (UART_QUEUE_ELEMENTS + 1)
 volatile uint8_t UART_queue[UART_QUEUE_SIZE];
-uint8_t UART_queue_in, UART_queue_out;
-uint8_t UART_queue_length;
-uint8_t UART_counter;
+volatile uint8_t UART_queue_in, UART_queue_out;
+volatile uint8_t UART_queue_length;
 
-//-------------------Interrupts--------------------------
+
+//-----------------------------------Interrupt---------------------------------
 
 ISR(USART0_RX_vect)
 {
  	volatile uint8_t data = UDR0;
+	 
 	if(data == 'B')
 	{
-		distance_until_stop = 1300;
-		stop_distance = 550;
-		wheel_sensor_counter = 0;
-		mode_complete = false;
-		mode = 'b';
+		// 'B' is sent from the communications module if the line of the 
+		// distressed is detected and the system is in the mapping stage.
+		if(competition_mode)
+		{
+			distance_until_stop = 1000;
+			stop_distance = 550;
+			wheel_sensor_counter = 0;
+			mode_complete = false;
+			mode = 'b';
+		}
 	}
 	else if(data == 'F')
 	{
-		Set_distance_until_stop(15);
-		wheel_sensor_counter = 0;
-		mode_complete = false;
-		mode = 'f';
+		// 'F' is sent from the communications module if the line of the
+		// startposition is detected and the system is in the mapping stage.
+		if(competition_mode)
+		{
+			Set_distance_until_stop(15);
+			wheel_sensor_counter = 0;
+			mode_complete = false;
+			mode = 'f';
+		}
 	}
 	else
 	{
@@ -62,7 +85,7 @@ ISR(USART0_RX_vect)
 }
 
 
-//-------------------Initializations-------------------
+//--------------------------------Initializations------------------------------
 
 void USART_Init(unsigned int baud)
 {
@@ -77,16 +100,13 @@ void USART_Init(unsigned int baud)
 }
 
 
-//----------------------Functions-----------------------
+//-----------------------------------Functions---------------------------------
 
 void UART_transmission(uint8_t data)
 {
 	while(!(UCSR0A & (1<<UDRE0))); // Wait for empty transmission register.
 	UDR0 = data; // Puts the transmission data on the transmission register.
 }
-
-
-//------------------------Queue-------------------------
 
 void UART_queue_init(void)
 {
@@ -144,8 +164,11 @@ void Clear_UART_queue()
 	
 }
 
+// Dequeues all UART values. Starts with a startbyte (0x00) and then all
+// the UART data will come in the same order every time.
 void Dequeue_UART_queue()
 {
+	// Dequeues if there is more than 2 bytes in the queue.
 	if(UART_queue_length < 3)
 	{
 		return;
@@ -167,6 +190,8 @@ void Dequeue_UART_queue()
 			
 			UART_queue_get(&second_byte);
 			
+			// If the second byte is 'A', autonomous is toggled and parameters
+			// are reseted. The third value will be removed.
 			if(second_byte == 'A')
 			{
 				autonomous = false;
@@ -182,31 +207,36 @@ void Dequeue_UART_queue()
 				return;
 			}
 			
+			// If the second byte is 'C', competition_mode is toggled.
+			// The third value will be removed.
 			if(second_byte == 'C')
 			{
-				Rotate_LIDAR(0.2);
-				if(competition_mode == 0)
+				if(!competition_mode)
 				{
-					competition_mode = 1;
+					Rotate_LIDAR(0.2);
 				}
-				else if(competition_mode == 1)
+				else if(competition_mode)
 				{
+					Stop_LIDAR();
 					while(UART_queue_in != UART_queue_out)
 					{
 						UART_queue_remove();
 					}
-					competition_mode = 0;
 				}
 				
+				competition_mode = !competition_mode;
 				mode_complete = true;
 				UART_queue_remove();
 				return;
 			}
 			
+			// If autonomous, all modes will be the second_byte and the
+			// data will be the third byte.
 			if(mode_complete)
 			{
 				uint8_t data;
 				UART_queue_get(&data);
+				PORTA |= (data << 4);
 				if(data == 180)
 				{
 					data = 230;
@@ -261,118 +291,4 @@ void Dequeue_UART_queue()
 			mode = second_byte;
 		}
 	}
-}
-	
-	
-	
-	
-	
-// 	uint8_t first_byte;
-// 	UART_queue_get(&first_byte);
-// 	
-// 	if(first_byte == 0x00)
-// 	{	
-// 		uint8_t next_data;
-// 		next_data = UART_queue_peek(UART_queue_out);
-// 			
-// 		if(next_data == 0x00)
-// 		{
-// 			return;
-// 		}
-// 		
-// 		uint8_t second_byte;
-// 		UART_queue_get(&second_byte);
-// 		//PORTA = (second_byte | 0x0F);
-// 		
-// 		if(second_byte == 'A')
-// 		{
-// 			autonomous = !autonomous;
-// 			if(autonomous)
-// 			{
-// 				PORTA |= (1 << PORTA0);
-// 			}
-// 			else
-// 			{
-// 				PORTA &= ~(1 << PORTA0);
-// 			}
-// 			mode = 's';
-// 			UART_queue_remove();
-// 			return;
-// 		}
-// 		
-// 		if(!autonomous)
-// 		{
-// 			mode = second_byte;
-// 			UART_queue_remove();
-// 			return;
-// 		}
-// 		
-// 		if(!mode_complete)
-// 		{
-// 			UART_queue_remove();
-// 			return;
-// 		}
-// 		/*mode = second_byte;*/
-// 		
-// 		uint8_t data;
-// 		UART_queue_get(&data);
-// 		
-// 		switch(second_byte)
-// 		{
-// 			case 'f':
-// 			mode = 'f';
-// 			mode_complete = false;
-// 			Set_distance_until_stop(data);
-// 			break;
-// 			
-// 			case 'b':
-// 			mode = 'b';
-// 			mode_complete = false;
-// 			Set_distance_until_stop(data);
-// 			break;
-// 			
-// 			case 'r':
-// 			mode = 'r';
-// 			mode_complete = false;
-// 			Set_rotation_distance(data);
-// 			break; 
-// 			
-// 			case 'l':
-// 			mode = 'l';
-// 			mode_complete = false;
-// 			Set_rotation_distance(data);
-// 			break;
-// 		}
-// 	}
-// }
-
-void Test_UART_queue()
-{
-	UART_queue_put(0x00);
-	UART_queue_put('A');
-	UART_queue_put(0x00);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('f');
-	UART_queue_put(3);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('r');
-	UART_queue_put(90);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('l');
-	UART_queue_put(90);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('L');
-	UART_queue_put(0x00);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('b');
-	UART_queue_put(7);
-	
-	UART_queue_put(0x00);
-	UART_queue_put('A');
-	UART_queue_put(0x00);
 }

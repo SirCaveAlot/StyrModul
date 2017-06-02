@@ -1,8 +1,8 @@
 ﻿/*
  * SPI.c
  *
- * Created: 4/3/2017 2:10:56 PM
- *  Author: gusst967
+ * Created: 4/3/2017
+ * Author: Gustav Strandberg, gusst967
  */  
 
 #include <avr/io.h>
@@ -15,36 +15,7 @@
 #include "Control.h"
 #include "Modes.h"
 
-
-/* Queue structure */
-#define SPI_QUEUE_ELEMENTS 40
-#define SPI_QUEUE_SIZE (SPI_QUEUE_ELEMENTS + 1)
-volatile uint8_t SPI_queue[SPI_QUEUE_SIZE];
-uint8_t SPI_queue_in, SPI_queue_out;
-uint8_t SPI_queue_length;
-bool dequeue;
-
-
-//---------------------Interrupts--------------
-
-ISR(SPI_STC_vect)
-{
-	if(autonomous)
-	{
-		volatile uint8_t data = SPDR;
-		SPI_queue_put(data); // Puts the received data on the queue.	
-	}
-}
-
-
-
-void Spi_init()
-{
-	DDRB=(1<<DDB6);               //MISO as OUTPUT
-	SPCR=(1<<SPIE)|(1<<SPE);      //Enable SPI && interrupt enable bit
-	SPDR=0;
-	SPI_queue_init();
-}
+//---------------------------Queue structure-----------------------------------
 
 
 /* Very simple queue
@@ -60,6 +31,34 @@ void Spi_init()
  * calls to QueuePut fail.
  */
 
+#define SPI_QUEUE_ELEMENTS 40
+#define SPI_QUEUE_SIZE (SPI_QUEUE_ELEMENTS + 1)
+volatile uint8_t SPI_queue[SPI_QUEUE_SIZE];
+uint8_t SPI_queue_in, SPI_queue_out;
+uint8_t SPI_queue_length;
+bool dequeue;
+
+
+//------------------------------Interrupt--------------------------------------
+
+ISR(SPI_STC_vect)
+{
+	if(autonomous)
+	{
+		volatile uint8_t data = SPDR;
+		SPI_queue_put(data); // Puts the received data on the queue.	
+	}
+}
+
+//------------------------------Functions--------------------------------------
+
+void Spi_init()
+{
+	DDRB=(1<<DDB6); //MISO as OUTPUT
+	SPCR=(1<<SPIE)|(1<<SPE); //Enable SPI && interrupt enable bit
+	SPDR=0;
+	SPI_queue_init();
+}
 
 void SPI_queue_init()
 {
@@ -109,9 +108,12 @@ void SPI_queue_remove()
 	SPI_queue_length--;
 }
 
+// Dequeues all SPI values. Starts with two startbytes (0xFF) and then all
+// the sensor data will come in the same order every time.
 void Dequeue_SPI_queue()
 {		
-	if(SPI_queue_length < 14)
+	// Start dequeuing if there is more than 14 bytes in the queue.
+	if(SPI_queue_length < 15)
 	{
 		dequeue = false;
 		return;
@@ -136,8 +138,10 @@ void Dequeue_SPI_queue()
 		IR_conversion('r', IR_value);
 		SPI_queue_get(&IR_value); // IR right back
 		IR_conversion('b', IR_value);
-		SPI_queue_get(&IR_value); // IR left
+		SPI_queue_get(&IR_value); // IR left front
 		IR_conversion('l', IR_value);
+		SPI_queue_get(&IR_value); // IR left back
+		IR_conversion('w', IR_value);
 		SPI_queue_get(&IR_value); // IR front
 		IR_conversion('f', IR_value);
 		
@@ -168,6 +172,8 @@ void Dequeue_SPI_queue()
 	}
 }
 
+// Checks if the SPI data is in the correct order in the queue. If it is, the
+// function returns true.
 void Start_dequeuing()
 {
 	uint8_t first_value = SPI_queue_peek(SPI_queue_out);
@@ -191,21 +197,4 @@ void Start_dequeuing()
 	{
 		dequeue = false;
 	}
-}
-
-
-
-void Test_SPI_queue()
-{
-	SPI_queue_put(0xFF);
-	SPI_queue_put(0xFF);
-	SPI_queue_put(100);
-	SPI_queue_put(80);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
-	SPI_queue_put(40);
-	SPI_queue_put(100);
 }

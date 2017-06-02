@@ -1,8 +1,8 @@
 ﻿/*
  * Sensor_values.c
  *
- * Created: 4/20/2017 3:32:28 PM
- *  Author: gusst967
+ * Created: 4/20/2017
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 #define F_CPU 14745600UL
@@ -18,19 +18,24 @@
 #include "Modes.h"
 #include "Control.h"
 
+//----------------------------Global definitions-------------------------------
 #define WHEEL_DIAMETER 63.34
 #define WHEEL_CIRCUMFERENCE (WHEEL_DIAMETER * M_PI)
 #define WHEEL_SLICE (WHEEL_CIRCUMFERENCE/16)
 #define GYRO_OFFSET 1230
-#define GYRO_CONSTANT_RIGHT 0.353 //0.366748166259168704156479
-#define GYRO_CONSTANT_LEFT 0.365
-#define ROTATION_DISTANCE 2221.44 // Distance when rotating 90 degrees, 0.1 mm
+#define GYRO_CONSTANT_RIGHT 0.353 
+#define GYRO_CONSTANT_LEFT 0.33
+// Distance when rotating 90 degrees using wheel sensors, 0.1 mm
+#define ROTATION_DISTANCE 2221.44 
 
-int left_distance;
+//--------------------------------Parameters-----------------------------------
+int front_left_distance;
+int back_left_distance;
 int front_right_distance;
 int back_right_distance;
 int forward_IR_distance;
-bool left_side_detected;
+bool front_left_side_detected;
+bool back_left_side_detected;
 bool front_right_side_detected;
 bool back_right_side_detected;
 bool forward_IR_detected;
@@ -45,28 +50,20 @@ int32_t travel_distance;
 volatile uint16_t wheel_sensor_counter;
 uint8_t standing_still_counter;
 uint8_t correct_angle_counter;
-uint8_t velocity;
-uint8_t LIDAR_angle;
-uint8_t LIDAR_rotation_speed;
-uint8_t LIDAR_rotated_turns;
-uint8_t LIDAR_turns;
 bool line_detected;
 float iteration_time = 0.02; // 20 ms
 
 bool first_detection;
-
-uint16_t left_IR_array[2] = {0, 0};
-uint16_t right_IR_array[2] = {0, 0};
-uint16_t LIDAR_array[2] = {0, 0};
-
-//--------------------------Timer 0--------------------------------
   
 //-------------------------IR sensors------------------------------
 
 void IR_conversion(char direction, uint8_t IR_value)
 {
-	uint16_t distance = round(10 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
+	uint16_t distance = round(10 * ((81.42 * exp(-0.0435 * IR_value)) + 
+				(25.63 * exp(-0.007169 * IR_value))));
 	
+	// The direction character tells what IR-sensor is the
+	// one to be converted. 
 	if(direction == 'r')
 	{
 		front_right_distance = distance;
@@ -79,29 +76,61 @@ void IR_conversion(char direction, uint8_t IR_value)
 	}
 	else if(direction == 'l')
 	{
-		left_distance = distance;
-		Left_side_detectable();
+		front_left_distance = distance;
+		Front_left_side_detectable();
+	}
+	else if(direction == 'w')
+	{
+		back_left_distance = distance;
+		Back_left_side_detectable();
 	}
 	else if(direction == 'f')
 	{
-		distance = floor(100 * ((81.42 * exp(-0.0435 * IR_value)) + (25.63 * exp(-0.007169 * IR_value))));
+		// The precision of forward_IR_distance is in 0.1 mm.
+		distance = round(100 * ((81.42 * exp(-0.0435 * IR_value)) + 
+			(25.63 * exp(-0.007169 * IR_value))));
 		forward_IR_distance = distance;
 		Forward_IR_detectable();
 	}	
 }
 
-void Left_side_detectable()
+// Returns true if the front left IR has contact.
+void Front_left_side_detectable()
 {
-	if(left_distance > 200)
+	if(front_left_distance > 200)
 	{
-		left_side_detected = false;
+		front_left_side_detected = false;
 	}
 	else
 	{
-		left_side_detected = true;
+		front_left_side_detected = true;
 	}
 }
 
+// Returns true if the back left IR has contact.
+void Back_left_side_detectable()
+{
+	if(back_left_distance > 200)
+	{
+		back_left_side_detected = false;
+	}
+	else
+	{
+		back_left_side_detected = true;
+	}
+}
+
+// Returns true if a wall is to the left of the robot.
+bool Left_side_detectable()
+{
+	if(front_left_side_detected && back_left_side_detected)
+	{
+		return true;
+	}
+	return false;
+}
+
+// Returns true if the front right IR has contact.
 void Front_right_side_detectable()
 {
 	if(front_right_distance > 200)
@@ -111,18 +140,10 @@ void Front_right_side_detectable()
 	else
 	{
 		front_right_side_detected = true;
-		
-		if(mode == 'f' && !first_detection && Right_side_detectable())
-		{
-			first_detection = true;
-		}
-		if(after_right_turn && Right_side_detectable())
-		{
-			after_right_turn = false;
-		}
 	}
 }
 
+// Returns true if the back right IR has contact.
 void Back_right_side_detectable()
 {
 	if(back_right_distance > 200)
@@ -135,18 +156,30 @@ void Back_right_side_detectable()
 	}
 }
 
+// Returns true if a wall is to the right of the robot.
 bool Right_side_detectable()
 {
 	if(front_right_side_detected && back_right_side_detected)
 	{
+		// Sets bools if true.
+		if(mode == 'f' && !first_detection)
+		{
+			first_detection = true;
+		}
+		if(after_right_turn)
+		{
+			after_right_turn = false;
+		}
+		
 		return true;
 	}
 	return false;
 }
 
+// Returns true if a wall is in front of the robot.
 void Forward_IR_detectable()
 {
-	if(forward_IR_distance > 2000)
+	if(forward_IR_distance > 3000)
 	{
 		forward_IR_detected = false;
 	}
@@ -156,20 +189,24 @@ void Forward_IR_detectable()
 	}
 }
 
-//---------------------------Gyro----------------------------------
+//-------------------------------Gyro------------------------------------------
 
+// Calculation and conversion of the gyro data to rotation speed.
 void Gyro_calculation(uint16_t gyro_data)
 {
+	// Compensation of hardware in gyro.
 	if(gyro_data > 1310 || gyro_data < 1150)
 	{
 		if(mode == 'r')
 		{
-			gyro_rotation_speed = (GYRO_OFFSET - gyro_data) * (GYRO_CONSTANT_RIGHT - (0.0005 * (180 - angle_to_rotate) / 90));
+			gyro_rotation_speed = (GYRO_OFFSET - gyro_data) * 
+				(GYRO_CONSTANT_RIGHT - (0.0005 * (180 - angle_to_rotate) / 90));
 			return;
 		}
 		else if(mode == 'l')
 		{
-			gyro_rotation_speed = (gyro_data - GYRO_OFFSET) * (GYRO_CONSTANT_LEFT - (0.0005 * (180 - angle_to_rotate) / 90));
+			gyro_rotation_speed = (gyro_data - GYRO_OFFSET) * 
+				(GYRO_CONSTANT_LEFT - (0.0005 * (180 - angle_to_rotate) / 90));
 			return;
 		}
 	}
@@ -178,6 +215,7 @@ void Gyro_calculation(uint16_t gyro_data)
 
 void Angle_calculation()
 {
+	// Calculates angle out of the rotation speed
 	int16_t delta_angle = round(gyro_rotation_speed * iteration_time * 100);
 	angle += delta_angle;
 }
@@ -193,31 +231,26 @@ void Set_rotation_distance(uint8_t data)
 	stop_distance = 250 - data;
 }
 
-
-//--------------------------LIDAR----------------------------------
-
-void Set_LIDAR_turns(uint8_t turns)
-{
-	LIDAR_turns = 360 * turns;
-}
-
-//--------------------------Wheels---------------------------------
+//--------------------------------Wheels---------------------------------------
 
 void Set_distance_until_stop(uint8_t number_of_modules)
 {
-	distance_until_stop = 4000 * number_of_modules;
-	stop_distance = 550 + (0.5 /*MAX_SPEED*/ * (number_of_modules - 1) * 25); 
+	distance_until_stop = 4000 * number_of_modules; // Precision of 0.1 mm.
+	stop_distance = 550 + (0.5 * (number_of_modules - 1) * 25); 
 }
 
-void Distance_travelled() //Calculates the travelled distance
+void Distance_travelled()
 {
 	travel_distance = round(wheel_sensor_counter * WHEEL_SLICE); 
 }
 
-void Calculate_wheel_sensor_counter(uint8_t data) //Calculates the wheel sensor and standing still counter
+//Calculates the wheel sensor and standing still counter.
+void Calculate_wheel_sensor_counter(uint8_t data) 
 {	
 	if(data == 0)
 	{
+		// If there hasn't been any wheel shifts, 
+		// increment standing_still_counter.
 		standing_still_counter++; 
 	}
 	else
@@ -232,25 +265,11 @@ bool Standing_still() // Returns true if the robot is standing still
 	if(standing_still_counter > 20)
 	{
 		return true;
-// 		if(Correct_angle_to_wall())
-// 		{
-// 			last_mode = mode;
-// 			wheel_sensor_counter = 0;
-// 			standing_still_counter = 0;
-// 			mode_complete = true;
-// 			distance_until_stop = 0;
-// 			travel_distance = 0;
-// 			
-// 			angle = 0;
-// 			angle_to_rotate = 0;
-// 			return true;
-// 		}
-// 		return false;
 	}
 	return false;
 }
 
-//--------------------------Tape--------------------------------
+//-------------------------------Tape-----------------------------------------.
 
 void Line_detection(uint8_t tape_data)
 {

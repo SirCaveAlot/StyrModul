@@ -1,8 +1,8 @@
 ﻿/*
  * PWM_SirCave.h
  *
- * Created: 3/31/2017 2:24:41 PM
- *  Author: gusst967
+ * Created: 3/31/2017 
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 

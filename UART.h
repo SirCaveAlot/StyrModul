@@ -1,8 +1,8 @@
 ﻿/*
  * UART.h
  *
- * Created: 4/3/2017 1:54:29 PM
- *  Author: gusst967
+ * Created: 3/31/2017
+ * Author: Gustav Strandberg, gusst967
  */ 
 
 
@@ -25,11 +25,8 @@ void UART_queue_remove();
 
 void Dequeue_UART_queue();
 
-void Test_UART_queue();
-
-extern uint8_t UART_queue_length;
-
-extern uint8_t UART_queue_out;
-extern uint8_t UART_queue_in;
+extern volatile uint8_t UART_queue_out;
+extern volatile uint8_t UART_queue_in;
+extern volatile uint8_t UART_queue_length;
 
 #endif
